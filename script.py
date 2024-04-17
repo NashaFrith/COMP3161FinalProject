@@ -5,6 +5,8 @@ import random
 
 fake = Faker()
 sqls = []
+sqlsStu = []
+sqlsAcc = []
 cids = []
 lecturers = []
 lecmax = []
@@ -27,7 +29,7 @@ def real_job(fake):
 for i in range(1):
     id = 9000 + i
     type = "Admin"
-    pa = type + id
+    pa = type + str(id)
     sql = "INSERT INTO Account (UserID, uType, Pass) VALUES ('{}','{}','{}')".format(id, type, pa)
     sqls.append(sql)
 
@@ -38,7 +40,7 @@ for i in range(10000):
     fname = fake.first_name()
     lname= fake.last_name()
     type = "Student"
-    pa = fname + fake.number()
+    pa = fname + str(random.randint(0,200))
     sql = "INSERT INTO Student (StudentID, FirstName, LastName) VALUES ('{}','{}','{}')".format(id,fname,lname)
     sqls.append(sql)
     sql = "INSERT INTO Account (UserID, uType, Pass) VALUES ('{}','{}','{}')".format(id, type, pa)
@@ -50,7 +52,7 @@ for _ in range(3):
     lid = random.randint(1011,1050)
     name = fake.last_name()
     lecturers.append((lid,name)) 
-    pa = name + fake.number()
+    pa = name + str(random.randint(0,20))
     type = "Lecturer"
 
     sql = "INSERT INTO LECTURER (LecID, LecName) VALUES ('{}', '{}')".format(lid, name)
@@ -118,7 +120,7 @@ for i in range(5):
 
 #INSERT INTO THREAD
 for i in range(2):
-    tid = 100 + random.randint()
+    tid = 100 + random.randint(0,100)
     fid = random.choice(fids)
     title = fake.sentence(10)
     body = fake.sentence(50)
@@ -130,14 +132,14 @@ for i in range(2):
 #INSERT INTO REPLY
 for i in range(2):
     mtid = random.choice(mtids)
-    rid = 200 + random.randint()
+    rid = 200 + random.randint(0,200)
     body = fake.sentence(20)
     
     for s in sqls:
         if s.startswith("INSERT INTO Account"):
             id = s.split("'")[1]
             sql = "INSERT INTO Reply (MainThreadID, ReplyID, UserID,ReplyBody) VALUES ('{}','{}','{}','{}')".format(mtid,rid,id,body)
-    sqls.append(sql)
+            sqls.append(sql)
 
 #INSERT INTO EVENT
 
