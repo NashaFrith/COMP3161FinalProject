@@ -19,12 +19,13 @@ course_provider = DynamicProvider(
     elements = ["Intro to Computing", "Object-oriented Programming","Math for Computing","Computing and Society", "Discrete Mathematics for Computer Science","Analysis of Algorithms","Digital Logic Design","Software Engineering","Object Technology","Net-Centric Computing","Computer Organisation"," Operating Systems","Introduction to Artificial Intelligence","Database Management Systems","Language Processors","Theory of Computation","Real-Time Embedded Systems","Group Project","Internship in Computing","Project Management"]
 )
 
-course_provider = DynamicProvider(
+item_provider = DynamicProvider(
     provider_name = "item_type",
     elements = ["link", "file", "slide"]
 )
 
 fake.add_provider(course_provider)
+fake.add_provider(item_provider)
 
 def real_job(fake):
     job = fake.job()
