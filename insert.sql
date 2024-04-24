@@ -14,7 +14,7 @@ CREATE Table Item(SectionID int, ItemID int, title int, itype varchar(20));
 CREATE Table Teaches(CourseID int, UserID int);
 
 CREATE Table Assignment (AssID int, UserID int, CourseID int, Grade int, date_submit date);
-CREATE Table Enroll (CourseID int, StudentID int, AvGrade int); --course averages
+CREATE Table Enroll (CourseID int, StudentID int); --course averages
 
 CREATE Table Event (EventID int, CourseID int, EventName varchar(255),Duedate date);
 

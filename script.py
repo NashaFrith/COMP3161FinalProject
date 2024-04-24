@@ -88,7 +88,7 @@ for secid in secids:
         itemid = i + 20
         title = "Learning File" + " " + str(i)
         type = fake.unique.item_type()
-        sql = "INSERT INTO Section(SectionID,ItemID,title,itype) VALUES ('{}','{}','{}','{}')".format(secid,itemid,title,type)
+        sql = "INSERT INTO Item(SectionID,ItemID,title,itype) VALUES ('{}','{}','{}','{}')".format(secid,itemid,title,type)
 
 
 #INSERT INTO TEACHES
@@ -124,7 +124,7 @@ for s in sqls:
                         as_courses.add(cid)
                         break
                 grade = random.randint(0,100)
-                sql = "INSERT INTO Enroll (CourseID, StudentID, AvGrade) VALUES ('{}','{}','{}')".format(cid,id,grade)
+                sql = "INSERT INTO Enroll (CourseID, StudentID) VALUES ('{}','{}')".format(cid,id)
                 sqls.append(sql)
 
 #INSERT INTO ASSIGNMENT
@@ -138,7 +138,7 @@ for s in sqls:
         grade = random.randint(0,100)
         sdate = fake.date()
 
-        sql = "INSERT INTO Assignment (AssID, UserID, StudentID,Grade,date_submit) VALUES ('{}','{}','{}','{}','{}')".format(aid,id,cid,grade,sdate)
+        sql = "INSERT INTO Assignment (AssID, UserID, CourseID,Grade,date_submit) VALUES ('{}','{}','{}','{}','{}')".format(aid,id,cid,grade,sdate)
         sqls.append(sql)
 
 
@@ -149,7 +149,7 @@ for cid in cids:
     ddate = fake.date()
     i + 1
     ename = "Assignment" + " " + str(i)
-    sql = "INSERT INTO Event (EventID, CourseID, EventName, DueDate) VALUES ('{}','{}','{}','{}')".format(eid,cid,ename,ddate)
+    sql = "INSERT INTO Event (EventID, CourseID, EventName, Duedate) VALUES ('{}','{}','{}','{}')".format(eid,cid,ename,ddate)
     sqls.append(sql)
 
 #INSERT INTO FORUM
@@ -172,7 +172,7 @@ for i in range(2):
     sql = "INSERT INTO Thread (ThreadID, ForumID, Title, Body,created_by) VALUES ('{}','{}','{}','{}')".format(tid,fid,title,body)
     sqls.append(sql)
 
-#INSERT INTO REPLY
+#INSERT INTO REPLIES
 for i in range(2):
     mtid = random.choice(mtids)
     rid = 200 + random.randint(0,200)
@@ -181,8 +181,8 @@ for i in range(2):
     for s in sqls:
         if s.startswith("INSERT INTO Account"):
             if type == "Student":
-                name = (s.split("'")[4]) + (s.split("'")[5])
-                sql = "INSERT INTO Reply (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('{}','{}','{}','{}')".format(mtid,rid,body,name)
+                name = (s.split("'")[4]) + " " + (s.split("'")[5])
+                sql = "INSERT INTO Replies (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('{}','{}','{}','{}')".format(mtid,rid,body,name)
                 sqls.append(sql)
 
 
