@@ -142,12 +142,13 @@ for s in sqls:
 
 
 #INSERT INTO EVENT
-i = random.randint(0,100)
+i = 1
 for cid in cids:
     eid = 2222 + i
     ddate = fake.date()
     i + 1
-    sql = "INSERT INTO Event (EventID, CourseID, DueDate) VALUES ('{}','{}','{}')".format(eid,cid,ddate)
+    ename = "Assignment" + " " + str(i)
+    sql = "INSERT INTO Event (EventID, CourseID, EventName, DueDate) VALUES ('{}','{}','{}','{}')".format(eid,cid,ename,ddate)
     sqls.append(sql)
 
 #INSERT INTO FORUM
@@ -167,7 +168,7 @@ for i in range(2):
     body = fake.sentence(50)
     mtids.append(tid)
 
-    sql = "INSERT INTO Thread (ThreadID, ForumID, Title, Body) VALUES ('{}','{}','{}','{}')".format(tid,fid,title,body)
+    sql = "INSERT INTO Thread (ThreadID, ForumID, Title, Body,created_by) VALUES ('{}','{}','{}','{}')".format(tid,fid,title,body)
     sqls.append(sql)
 
 #INSERT INTO REPLY
@@ -178,9 +179,10 @@ for i in range(2):
     
     for s in sqls:
         if s.startswith("INSERT INTO Account"):
-            id = s.split("'")[1]
-            sql = "INSERT INTO Reply (MainThreadID, ReplyID, UserID,ReplyBody) VALUES ('{}','{}','{}','{}')".format(mtid,rid,id,body)
-            sqls.append(sql)
+            if type == "Student":
+                name = (s.split("'")[4]) + (s.split("'")[5])
+                sql = "INSERT INTO Reply (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('{}','{}','{}','{}')".format(mtid,rid,body,name)
+                sqls.append(sql)
 
 
 with open(r'/home/nacho/repos/COMP3161FinalProject/insert.sql','w') as f:
