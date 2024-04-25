@@ -132,7 +132,7 @@ def create_reply():
         ReplyID = content['ReplyID']
         ReplyBody = content['ReplyBody']
         created_by = content['created_by']
-        query = "INSERT INTO Reply (MainThreadID, ReplyID, ReplyBody, created_by) VALUES (%s, %s, %s, %s)"
+        query = "INSERT INTO Replies (MainThreadID, ReplyID, ReplyBody, created_by) VALUES (%s, %s, %s, %s)"
         cursor.execute(query, (MainThreadID, ReplyID,ReplyBody, created_by))
         connection.commit()
         cursor.close()
@@ -147,24 +147,34 @@ def get_replies(main_thread_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = f"SELECT * FROM Reply WHERE MainThreadID = {main_thread_id}"
-        cursor.execute(query)
-        result = cursor.fetchall()
+        
+        def fetch_replies(thread_id):
+            query = f"SELECT * FROM Replies WHERE MainThreadID = {thread_id}"
+            cursor.execute(query)
+            result = cursor.fetchall()
 
-        replies = []
-        for MainThreadID, ReplyID, ReplyBody, created_by in result:
-            replies.append({
-                'MainThreadID': MainThreadID,
-                'ReplyID': ReplyID,                
-                'ReplyBody': ReplyBody,
-                'created_by': created_by
-            })
+            replies = []
+            for MainThreadID, ReplyID, ReplyBody, created_by in result:
+                reply = {
+                    'ReplyID': ReplyID,                
+                    'ReplyBody': ReplyBody,
+                    'created_by': created_by,
+                    'replies': []  
+                }
+                reply['replies'] = fetch_replies(ReplyID)
+                replies.append(reply)
+
+            return replies
+        all_replies = fetch_replies(main_thread_id)
+
         cursor.close()
         connection.close()
-        return jsonify(replies) 
+        return jsonify(all_replies) 
 
     except Exception as e:
         return jsonify({'error': str(e)})
+
+
 
 ###########################Course Content###########################
 @app.route('/content/<course_id>', methods=['GET']) 
@@ -250,11 +260,11 @@ def get_assignments(course_id): #Should it be assignments for a course or studen
         result = cursor.fetchall()
 
         assignments = []
-        for CourseID, AssID, StudentID, Grade, date_submit in result:
+        for CourseID, AssID, UserID, Grade, date_submit in result:
             assignments.append({
                 'CourseID': CourseID,
                 'AssID': AssID,
-                'StudentID': StudentID,
+                'UserID': UserID,
                 'Grade': Grade,
                 'date_submit': date_submit
             })
@@ -272,11 +282,11 @@ def submit_assignment():
         cursor = connection.cursor()
         content = request.json
         AssID = content['AssID']
-        StudentID = content['StudentID']
+        UserID = content['UserID']
         CourseID = content['CourseID']
         date_submit = content['date_submit']
-        query = "INSERT INTO Assignment (AssID, StudentID, CourseID, date_submit) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (AssID, StudentID, CourseID, date_submit))
+        query = "INSERT INTO Assignment (AssID, UserID, CourseID, date_submit) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (AssID, UserID, CourseID, date_submit))
         connection.commit()
         cursor.close()
         connection.close()
@@ -416,23 +426,23 @@ def get_top10_students():
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = ("CREATE OR REPLACE VIEW CourseAverageGrades AS SELECT StudentID, CourseID, AVG(Grade) AS avgGrade " +
-                "FROM Assignment GROUP BY CourseID, StudentID;")
+        query = ("CREATE OR REPLACE VIEW CourseAverageGrades AS SELECT UserID, CourseID, AVG(Grade) AS avgGrade " +
+                "FROM Assignment GROUP BY CourseID, UserID;")
         cursor.execute(query)
 
-        query = ("CREATE OR REPLACE VIEW StudentOverallAverage AS SELECT StudentID, AVG(avgGrade) AS overallAvg " +
-                "FROM CourseAverageGrades GROUP BY StudentID;")
+        query = ("CREATE OR REPLACE VIEW StudentOverallAverage AS SELECT UserID, AVG(avgGrade) AS overallAvg " +
+                "FROM CourseAverageGrades GROUP BY UserID;")
         cursor.execute(query)
 
-        query = ("SELECT StudentID, FirstName, LastName, overallAvg FROM StudentOverallAverage " +
-                "JOIN Account ON StudentID = UserID ORDER BY overallAvg DESC " +
+        query = ("SELECT sag.UserID, FirstName, LastName, overallAvg FROM StudentOverallAverage sag " +
+                "JOIN Account ac ON sag.UserID = ac.UserID ORDER BY overallAvg DESC " +
                 "LIMIT 10;")
         cursor.execute(query)     
         result = cursor.fetchall()
         students = []
-        for StudentID, FirstName, LastName, OverallAverage in result:
+        for UserID, FirstName, LastName, OverallAverage in result:
             students.append({
-                'StudentID': StudentID,
+                'UserID': UserID,
                 'FirstName': FirstName,
                 'LastName': LastName,
                 'OverallAverage': round(OverallAverage, 1)
