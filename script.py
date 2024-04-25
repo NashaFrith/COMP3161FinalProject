@@ -7,11 +7,12 @@ fake = Faker()
 sqls = []
 sqlsStu = []
 sqlsAcc = []
+ids = []
 cids = []
 lids = []
 lecmax = []
 fids = []
-mtids = []
+tids = []
 secids = []
 as_courses = []
 
@@ -43,8 +44,10 @@ for i in range(1):
     sql = "INSERT INTO Account (UserID, uType, Pass, FirstName, LastName) VALUES ('{}','{}','{}','{}','{}')".format(id, type, pa,fname,lname)
     sqls.append(sql)
 
+id = 0
 for i in range(10000):
-    id = i
+    id += 1
+    ids.append(id)
     fname = fake.first_name()
     lname= fake.last_name()
     type = "Student"
@@ -80,6 +83,7 @@ for cid in cids:
 for cid in cids:
     for i in range(0,2):
         secid = i +1
+        secids.append(secid)
         sql = "INSERT INTO Section(CourseID, SectionID) VALUES ('{}','{}')".format(cid,secid)
         sqls.append(sql)
 
@@ -88,7 +92,7 @@ for secid in secids:
     for i in range(0,4):
         itemid = i + 20
         title = "Learning File" + " " + str(i)
-        type = fake.unique.item_type()
+        type = fake.item_type()
         sql = "INSERT INTO Item(SectionID,ItemID,title,itype) VALUES ('{}','{}','{}','{}')".format(secid,itemid,title,type)
         sqls.append(sql)
 
@@ -130,7 +134,8 @@ i = 1
 for s in sqls:
     if s.startswith("INSERT INTO Enroll"):
         cid = s.split("'")[1]
-        id = s.split("'")[2]
+        id = s.split("'")[3]
+        print(id)
         aid = 1111 + i
         i+=1
         grade = random.randint(0,100)
@@ -165,25 +170,23 @@ for i in range(2):
     fid = random.choice(fids)
     title = fake.sentence(10)
     body = fake.sentence(50)
-    mtids.append(tid)
+    tids.append(tid)
+    id = random.choice(ids)
 
-    sql = "INSERT INTO Thread (ThreadID, ForumID, Title, Body,created_by) VALUES ('{}','{}','{}','{}')".format(tid,fid,title,body)
+    sql = "INSERT INTO Thread (ThreadID, ForumID, Title, Body,created_by) VALUES ('{}','{}','{}','{}','{}')".format(tid,fid,title,body,id)
     sqls.append(sql)
 
 #INSERT INTO REPLIES
 for i in range(2):
-    mtid = random.choice(mtids)
+    tid = random.choice(tids)
     rid = 200 + random.randint(0,200)
     body = fake.sentence(20)
+    id = random.choice(ids)
     
-    for s in sqls:
-        if s.startswith("INSERT INTO Account"):
-            if type == "Student":
-                name = (s.split("'")[4]) + " " + (s.split("'")[5])
-                sql = "INSERT INTO Replies (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('{}','{}','{}','{}')".format(mtid,rid,body,name)
-                sqls.append(sql)
+    sql = "INSERT INTO Replies (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('{}','{}','{}','{}')".format(tid,rid,body,id)
+    sqls.append(sql)
 
 
-with open(r'/home/nacho/repos/COMP3161FinalProject/insert.sql','w') as f:
-    for i, sql in enumerate(sqls):
-        f.write(sql + '\n')
+#with open(r'/home/nacho/repos/COMP3161FinalProject/insert.sql','w') as f:
+    #for i, sql in enumerate(sqls):
+        #f.write(sql + '\n')
