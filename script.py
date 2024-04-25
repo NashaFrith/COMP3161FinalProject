@@ -8,11 +8,12 @@ sqls = []
 sqlsStu = []
 sqlsAcc = []
 cids = []
-lecturers = []
+lids = []
 lecmax = []
 fids = []
 mtids = []
 secids = []
+as_courses = []
 
 course_provider = DynamicProvider(
     provider_name = "course",
@@ -48,7 +49,7 @@ for i in range(10000):
     lname= fake.last_name()
     type = "Student"
     pa = fname + str(random.randint(0,200))
-    sql = "INSERT INTO Account (UserID, uType, Pass, FirstName, LastName) VALUES ('{}','{}','{}','{}','{})".format(id, type, pa,fname,lname)
+    sql = "INSERT INTO Account (UserID, uType, Pass, FirstName, LastName) VALUES ('{}','{}','{}','{}','{}')".format(id, type, pa,fname,lname)
     sqls.append(sql)
 
 
@@ -56,7 +57,7 @@ for _ in range(3):
     lid = random.randint(1011,1050)
     fname = fake.first_name()
     lname= fake.last_name()
-    lecturers.append(lid) 
+    lids.append(lid) 
     pa = fname + str(random.randint(0,20))
     type = "Lecturer"
 
@@ -89,14 +90,14 @@ for secid in secids:
         title = "Learning File" + " " + str(i)
         type = fake.unique.item_type()
         sql = "INSERT INTO Item(SectionID,ItemID,title,itype) VALUES ('{}','{}','{}','{}')".format(secid,itemid,title,type)
-
+        sqls.append(sql)
 
 #INSERT INTO TEACHES
 for cid in cids:
-    lid = lecturers.pop(0)
-    lecturers.append(lid)
+    lid = lids.pop(0)
+    lids.append(lid)
     sql = "INSERT INTO Teaches (CourseID, UserID) VALUES ('{}','{}')".format(cid,lid)
-
+    sqls.append(sql)
 '''
 for i in range(30):
     cid = 4001 + i
@@ -111,18 +112,15 @@ for i in range(30):
 for s in sqls:
     if s.startswith("INSERT INTO Account"):
         id = s.split("'")[1]
-        type = s.split("'")[2]
-
-        if type == "Student":
-            as_courses = set()
-            i = random.randint(3,6)
-
+        type = s.split("'")[3]
+    
+        if type == "Student":          
+            i = random.randint(3,6) 
             for _ in range(i):
-                while True:
-                    cid = random.choice(cids)
-                    if cid not in as_courses:
-                        as_courses.add(cid)
-                        break
+                cid = random.choice(cids)
+                if cid not in as_courses:
+                    as_courses.append(cid)
+                    break
                 grade = random.randint(0,100)
                 sql = "INSERT INTO Enroll (CourseID, StudentID) VALUES ('{}','{}')".format(cid,id)
                 sqls.append(sql)
