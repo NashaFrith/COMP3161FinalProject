@@ -165,8 +165,8 @@ def get_replies(main_thread_id):
 
     except Exception as e:
         return jsonify({'error': str(e)})
+
 ###########################Course Content###########################
-#########################
 @app.route('/content/<course_id>', methods=['GET']) 
 def get_content(course_id):
     try:
@@ -241,7 +241,7 @@ def add_item():
 
 ###########################Assignments###########################
 @app.route('/assignments/<course_id>', methods=['GET']) 
-def get_assignments(course_id): #Should it be assignments for a course or student?
+def get_assignments(course_id): #Should it be assignments for a course or student or event?
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
@@ -304,31 +304,7 @@ def add_assignment_grade(assignment_id):
             return jsonify({'error': 'Assignment not found'})
     except Exception as e:
         return jsonify({'error': str(e)})
-###################FIX###########################
-@app.route('/final_grade/<student_id>/<course_id>', methods=['GET']) 
-def get_final_grade(course_id):
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = f"SELECT * FROM Assignment WHERE CourseID = {course_id}"
-        cursor.execute(query)
-        result = cursor.fetchall()
 
-        assignments = []
-        for CourseID, AssID, StudentID, Grade, date_submit in result:
-            assignments.append({
-                'CourseID': CourseID,
-                'AssID': AssID,
-                'StudentID': StudentID,
-                'Grade': Grade,
-                'date_submit': date_submit
-            })
-        cursor.close()
-        connection.close()
-        return jsonify(assignments) 
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
 ###########################Reports###########################
 @app.route('/courses_with_50plus', methods=['GET'])
 def get_courses_with_50plus_students():
@@ -435,20 +411,23 @@ def get_top10_courses():
     except Exception as e:
         return jsonify({'error': str(e)})
 
-#############################FIX########################################333
 @app.route('/top10_students', methods=['GET'])
 def get_top10_students():
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = ("CREATE OR REPLACE VIEW StudentAverageGrades AS SELECT StudentID, AVG(Grade) AS average_grade " +
-                "FROM Assignment GROUP BY StudentID;")
+        query = ("CREATE OR REPLACE VIEW CourseAverageGrades AS SELECT StudentID, CourseID, AVG(Grade) AS avgGrade " +
+                "FROM Assignment GROUP BY CourseID, StudentID;")
         cursor.execute(query)
 
-        query = ("SELECT StudentID, FirstName, LastName, average_grade FROM StudentAverageGrades " +
-                "JOIN Account on UserID = StudentID " +
-                "ORDER BY average_grade DESC LIMIT 10; ")
+        query = ("CREATE OR REPLACE VIEW StudentOverallAverage AS SELECT StudentID, AVG(avgGrade) AS overallAvg " +
+                "FROM CourseAverageGrades GROUP BY StudentID;")
         cursor.execute(query)
+
+        query = ("SELECT StudentID, FirstName, LastName, overallAvg FROM StudentOverallAverage " +
+                "JOIN Account ON StudentID = UserID ORDER BY overallAvg DESC " +
+                "LIMIT 10;")
+        cursor.execute(query)     
         result = cursor.fetchall()
         students = []
         for StudentID, FirstName, LastName, OverallAverage in result:
