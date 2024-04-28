@@ -1,0 +1,244 @@
+{
+	"info": {
+		"_postman_id": "18783f81-f478-4e4a-8038-fafe6ecbde82",
+		"name": "DBMS FLASK API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "34408591"
+	},
+	"item": [
+		{
+			"name": "Create an event",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"EventID\": \"1\", \"CourseID\": \"1\", \"EventName\": \"New Event\", \"Duedate\": \"2024-04-27\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/events"
+			},
+			"response": []
+		},
+		{
+			"name": "Create a forum",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"ForumID\": \"1\", \"CourseID\": \"1\", \"ForumName\": \"New Forum\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/forums"
+			},
+			"response": []
+		},
+		{
+			"name": "Create discussion thread",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"ThreadID\": \"1\", \"ForumID\": \"1\", \"Title\": \"New Thread\", \"Body\": \"Discussion Body\", \"created_by\": \"User\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/discussion_threads"
+			},
+			"response": []
+		},
+		{
+			"name": "Create a reply",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"MainThreadID\": \"1\", \"ReplyID\": \"1\", \"ReplyBody\": \"Reply Body\", \"created_by\": \"User\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/replies"
+			},
+			"response": []
+		},
+		{
+			"name": "Add section",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"CourseID\": \"1\", \"SectionID\": \"1\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/section"
+			},
+			"response": []
+		},
+		{
+			"name": "Add item",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"SectionID\": \"1\", \"ItemID\": \"1\", \"title\": \"New Item\", \"itype\": \"Type\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/items"
+			},
+			"response": []
+		},
+		{
+			"name": "Submit assignment",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"AssID\": \"1\", \"UserID\": \"1\", \"CourseID\": \"1\", \"date_submit\": \"2024-04-27\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/assignments"
+			},
+			"response": []
+		},
+		{
+			"name": "Add assignment grade",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"Grade\": \"A\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/add_grade/{assignment_id}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get forums",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/forums/{course_id}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get discussion threads",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/discussion_threads/{forum_id}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get replies(error)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/replies/{main_thread_id}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get course content",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/content/{course_id}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get assignments",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/assignments/{course_id}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses with 50+ students",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/courses_with_50plus"
+			},
+			"response": []
+		},
+		{
+			"name": "Get students with 5+ courses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/students_with_5plus_courses"
+			},
+			"response": []
+		},
+		{
+			"name": "Get lecturers with 3+ courses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/lecturers_with_3plus_courses"
+			},
+			"response": []
+		},
+		{
+			"name": "Get top 10 courses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/top10_courses"
+			},
+			"response": []
+		},
+		{
+			"name": "Get top 10 students",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/top10_students"
+			},
+			"response": []
+		}
+	]
+}
