@@ -106,6 +106,7 @@ def create_account():
     return render_template('create_account.html', message=None) 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 ########################### Course Content ###########################
 
@@ -282,6 +283,8 @@ def add_item():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+=======
+>>>>>>> parent of bf1b4f1 (working in progress)
 =======
 >>>>>>> parent of bf1b4f1 (working in progress)
 
