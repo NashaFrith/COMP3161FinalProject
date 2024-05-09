@@ -45,7 +45,7 @@ for i in range(1):
     sqls.append(sql)
 
 id = 0
-for i in range(10000):
+for i in range(100):
     id += 1
     ids.append(id)
     fname = fake.first_name()
@@ -190,3 +190,5 @@ for i in range(2):
 with open(r'insert.sql','a') as f:
     for i, sql in enumerate(sqls):
         f.write(sql + '\n')
+
+print("SQL generated successfully")
