@@ -1,0 +1,94 @@
+{% include 'header.html' %}
+<body>
+    <div class="container">        
+        {% include 'admin_menu.html' %}    
+        <div class="content">
+            <div class="container-fluid">   	
+                <div class="row">
+                    <div class="col-md-10">
+                        <a href="#"><strong><span class="ti-harddrives"></span> Search Results</strong></a>
+                        <p>Search Value: <b>{{ search_value }}</b></p>
+                    </div>
+
+                    <div class="col-md-2">
+                        <a href="{{ url_for('courses') }}" class="btn btn-primary">Back</a>
+                    </div>
+                </div>
+                <div id="searchResults">
+                    {% if student_results %}    
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Course ID</th>
+                                    <th>Course Name</th>
+                                    <th>Lecturer ID</th>
+                                    <th>Lecturer Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in student_results %}
+                                    <tr>
+                                        <td>{{ result.student_id }}</td>
+                                        <td>{{ result.course_id }}</td>
+                                        <td>{{ result.course_name }}</td>
+                                        <td>{{ result.lecturer_id }}</td>
+                                        <td>{{ result.lecturer_name }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                    
+                    {% if lecturer_results %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Lecturer ID</th>
+                                    <th>Course ID</th>
+                                    <th>Course Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in lecturer_results %}
+                                    <tr>
+                                        <td>{{ result.lecturer_id }}</td>
+                                        <td>{{ result.course_id }}</td>
+                                        <td>{{ result.course_name }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                    
+                    {% if course_results %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Student Name</th>
+                                    <th>Lecturer ID</th>
+                                    <th>Lecturer Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in course_results %}
+                                    <tr>
+                                        <td>{{ result.student_id }}</td>
+                                        <td>{{ result.student_name }}</td>
+                                        <td>{{ result.lecturer_id }}</td>
+                                        <td>{{ result.lecturer_name }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                    
+                    {% if not student_results and not lecturer_results and not course_results %}
+                        <p>No results found for your search query.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div> 
+    </div>
+</body>

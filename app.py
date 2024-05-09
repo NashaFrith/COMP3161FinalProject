@@ -122,6 +122,94 @@ def student_dashboard():
     else:
         return redirect(url_for('login'))
 
+########################### Course Content ###########################
+
+@app.route("/courses", methods =['GET', 'POST'])
+def courses():
+    if 'loggedin' in session:  
+       cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+       cursor.execute('SELECT c.course_id, c.course_name, l.lecturer_id, l.lecturer_name FROM sms_courses c LEFT JOIN sms_lecturers l ON c.lecturer_id = l.lecturer_id')
+       courses = cursor.fetchall()
+           
+       cursor.execute('SELECT * FROM sms_lecturers')
+       lecturers = cursor.fetchall()
+        
+       return render_template("courses.html", courses = courses, lecturers = lecturers)
+    return redirect(url_for('login'))
+@app.route('/content/<course_id>', methods=['GET']) 
+
+def get_content(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = f"SELECT * FROM Section WHERE CourseID = {course_id}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        courseContent = []
+        for CourseID, SectionID in result:
+            items = []
+            query2 = f"SELECT * FROM Item WHERE SectionID = {SectionID}"
+            cursor.execute(query2)
+            result2 = cursor.fetchall()
+
+            for ItemID, SectionID, title, itype in result2:
+                items.append({
+                    'ItemID': ItemID,
+                    'SectionID': SectionID,
+                    'title': title,
+                    'itype': itype
+                })
+
+            courseContent.append({
+                'CourseID': CourseID,
+                'SectionID': SectionID,
+                'Items': items
+            })
+        cursor.close()
+        connection.close()
+        return jsonify(courseContent) 
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/section', methods=['POST'])
+def add_section():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        CourseID = content['CourseID'] 
+        SectionID = content['SectionID']        
+        query = "INSERT INTO Section (CourseID, SectionID) VALUES (%s, %s)"
+        cursor.execute(query, (CourseID, SectionID))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Course section created"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/items', methods=['POST'])
+def add_item():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        SectionID = content['SectionID']
+        ItemID = content['ItemID']
+        title = content['title']
+        itype = content['itype']
+        query = "INSERT INTO Item (SectionID, ItemID, title, itype) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (SectionID, ItemID, title, itype))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Course item added"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
 ########################### Events ###########################
 @app.route('/events', methods=['POST'])
 def create_event():
@@ -285,79 +373,6 @@ def get_replies(main_thread_id):
 
 
 
-########################### Course Content ###########################
-
-@app.route('/content/<course_id>', methods=['GET']) 
-def get_content(course_id):
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = f"SELECT * FROM Section WHERE CourseID = {course_id}"
-        cursor.execute(query)
-        result = cursor.fetchall()
-
-        courseContent = []
-        for CourseID, SectionID in result:
-            items = []
-            query2 = f"SELECT * FROM Item WHERE SectionID = {SectionID}"
-            cursor.execute(query2)
-            result2 = cursor.fetchall()
-
-            for ItemID, SectionID, title, itype in result2:
-                items.append({
-                    'ItemID': ItemID,
-                    'SectionID': SectionID,
-                    'title': title,
-                    'itype': itype
-                })
-
-            courseContent.append({
-                'CourseID': CourseID,
-                'SectionID': SectionID,
-                'Items': items
-            })
-        cursor.close()
-        connection.close()
-        return jsonify(courseContent) 
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-@app.route('/section', methods=['POST'])
-def add_section():
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        content = request.json
-        CourseID = content['CourseID'] 
-        SectionID = content['SectionID']        
-        query = "INSERT INTO Section (CourseID, SectionID) VALUES (%s, %s)"
-        cursor.execute(query, (CourseID, SectionID))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return jsonify({"success" : "Course section created"})
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-@app.route('/items', methods=['POST'])
-def add_item():
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        content = request.json
-        SectionID = content['SectionID']
-        ItemID = content['ItemID']
-        title = content['title']
-        itype = content['itype']
-        query = "INSERT INTO Item (SectionID, ItemID, title, itype) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (SectionID, ItemID, title, itype))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return jsonify({"success" : "Course item added"})
-    except Exception as e:
-        return jsonify({'error': str(e)})
 
 ########################### Assignments ###########################
 @app.route('/assignments/<course_id>', methods=['GET']) 
