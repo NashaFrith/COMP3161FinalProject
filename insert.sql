@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 -- Create Database
 DROP DATABASE IF EXISTS uwi;
 CREATE DATABASE uwi;
@@ -1174,3 +1176,7 @@ INSERT INTO Thread (ThreadID, ForumID, Title, Body,created_by) VALUES ('134','0'
 INSERT INTO Thread (ThreadID, ForumID, Title, Body,created_by) VALUES ('177','1','Believe concern government force book share.','City industry character down contain music build executive bank pay remember never information bit threat fire along whom trouble pass spring different involve wife board amount long staff certain loss south half treat section born onto political poor nation.','55');
 INSERT INTO Replies (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('177','370','Shoulder eye participant employee manage add interview reflect effort recent be explain.','5');
 INSERT INTO Replies (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('177','206','Huge itself change fear still child wish key down time bit reach open exist tough nature offer under thousand such place majority wrong turn pretty.','22');
+<<<<<<< HEAD
+=======
+>>>>>>> parent of bf1b4f1 (working in progress)
+>>>>>>> parent of dc9f70b (updated login works)
