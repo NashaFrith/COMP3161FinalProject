@@ -153,25 +153,24 @@ def register_course():
         return jsonify({'Message': 'Registration successful'}), 201
     except mysql.connector.Error as e:
         return jsonify({'Error': str(e)}), 500
-        
-############################## end of corrections#########################
-
 
 #Retrieve members of  a course#
-@app.route('/course/members/<course_id>', methods=['GET'])
+@app.route('/course/members/<int:course_id>', methods=['GET'])
 def get_members_of_course(course_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
         
-        
-        student_query = f"SELECT StudentID, FirstName, LastName FROM Student WHERE StudentID IN (SELECT StudentID FROM Assign WHERE CourseID = {course_id})"
-        cursor.execute(student_query)
-        students = [{'StudentID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
+        student_query = """SELECT Account.UserID, Account.FirstName, Account.LastName 
+            FROM Account JOIN Enroll ON Account.UserID = Enroll.StudentID WHERE Enroll.CourseID = %s"""
+        cursor.execute(student_query, (course_id,))
+        students = [{'UserID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
 
-        lecturer_query = f"SELECT LecID, LecName FROM Lecturer WHERE LecID IN (SELECT LecID FROM Course WHERE CourseID = {course_id})"
-        cursor.execute(lecturer_query)
-        lecturer = [{'LecID': row[0], 'LecName': row[1]} for row in cursor.fetchall()]
+        lecturer_query = """SELECT Account.UserID, Account.FirstName, Account.LastName FROM Account
+            JOIN Teaches ON Account.UserID = Teaches.UserID
+            WHERE Teaches.CourseID = %s"""
+        cursor.execute(lecturer_query, (course_id,))
+        lecturer = [{'UserID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
 
         cursor.close()
         connection.close()
@@ -181,6 +180,8 @@ def get_members_of_course(course_id):
         return jsonify(course_members), 200
     except mysql.connector.Error as e:
         return jsonify({'error': str(e)}), 500
+        
+############################## end of corrections#########################
 
 
 #Retrieve calendar events for a course#
