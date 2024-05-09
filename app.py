@@ -12,7 +12,207 @@ def get_db_connection():
     database = 'uwi2')
     return connection
 
+###create course###
+@app.route('/create_course', methods=['POST'])
+def create_course():
 
+    try:
+        connection= get_db_connection()
+        cursor=connection.cursor()
+        content = request.json
+        AdminID = content ['AdminID'] 
+        CourseName = content ['CourseName']
+    
+        
+        query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'admin'"
+        cursor.execute(query, (AdminID,))
+        result = cursor.fetchall()
+
+        if len(result) == 0:
+            return jsonify({'Error': 'Unauthorized'}), 401
+
+        query = "INSERT INTO Courses (CourseName) VALUES (%s)"
+        cursor.execute(query, (CourseName))
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'message': 'Course created successfully'}), 201
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@app.route('/get_all_courses', methods=['GET'])
+def get_all_courses():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        
+        query = "SELECT * FROM Course"
+        cursor.execute(query)
+        
+        courses = cursor.fetchall()
+
+        cursor.close()
+
+        return jsonify(courses), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/courses/student/<int:student_id>', methods=['GET'])
+
+def get_courses_for_student(student_id):
+    try:
+        connection= get_db_connection()
+        cursor=connection.cursor()
+        query = f"SELECT * FROM Student WHERE StudentID = {student_id}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+        
+        return jsonify(result), 200
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
+
+# Retrieve courses taught by a particular lecturer
+@app.route('/courses/lecturer/<lecturer_id>', methods=['GET'])
+def get_courses_for_lecturer(lecturer_id):
+    try:
+        connection= get_db_connection()
+        cursor=connection.cursor()
+        query = f"SELECT * FROM Lecturer WHERE LecID = {lecturer_id}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+        
+        return jsonify(result), 200
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
+
+
+
+
+@app.route('/register_course', methods=['POST'])
+def register_course():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+
+        UserID = content ['UserID']  # ID of the user registering for the course
+        CourseID = content ['CourseID'] # ID of the course being registered for
+        Role = content ['Role']     # Role of the user (student or lecturer)
+
+
+        if Role == 'student':
+
+            query = "SELECT * FROM Assign WHERE StudentID = %s AND CourseID = %s"
+            cursor.execute(query, (UserID, CourseID))
+            existing_registration = cursor.fetchone()
+            
+            if existing_registration:
+                return jsonify({'Error': 'Student is already enrolled in the course'}), 400
+            
+            
+            query = "INSERT INTO Assign (StudentID, CourseID) VALUES (%s, %s)"
+            cursor.execute(query, (UserID, CourseID))
+        elif Role == 'lecturer':
+
+            query = "SELECT * FROM Course WHERE CourseID = %s"
+            cursor.execute(query, (CourseID,))
+            existing_assignment = cursor.fetchone()
+            
+            if existing_assignment and existing_assignment[3] is not None:
+                return jsonify({'Error': 'Course already has a lecturer assigned'}), 400
+            
+            query = "UPDATE Course SET LecID = %s WHERE CourseID = %s"
+            cursor.execute(query, (UserID, CourseID))
+        else:
+            return jsonify({'error': 'Invalid role'}), 400
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'Message': 'Registration successful'}), 201
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
+
+
+
+
+@app.route('/course/members/<course_id>', methods=['GET'])
+def get_members_of_course(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        
+        student_query = f"SELECT StudentID, FirstName, LastName FROM Student WHERE StudentID IN (SELECT StudentID FROM Assign WHERE CourseID = {course_id})"
+        cursor.execute(student_query)
+        students = [{'StudentID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
+
+        lecturer_query = f"SELECT LecID, LecName FROM Lecturer WHERE LecID IN (SELECT LecID FROM Course WHERE CourseID = {course_id})"
+        cursor.execute(lecturer_query)
+        lecturer = [{'LecID': row[0], 'LecName': row[1]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+
+        course_members = {'students': students, 'lecturer': lecturer}
+        
+        return jsonify(course_members), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/course/events/<course_id>', methods=['GET'])
+def get_course_events(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        event_query = f"SELECT EventID, EventName, Duedate FROM Event WHERE CourseID = {course_id}"
+        cursor.execute(event_query)
+        events = [{'EventID': row[0], 'EventName': row[1], 'Duedate': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+
+        return jsonify(events), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/student/events/<int:student_id>/<date>', methods=['GET'])
+def get_events_for_student(student_id, date):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        # Retrieve all calendar events for the given student on the given date
+        event_query = f"SELECT EventID, EventName, Duedate FROM Event WHERE CourseID IN (SELECT CourseID FROM Enroll WHERE StudentID = {student_id}) AND DATE(Duedate) = '{date}'"
+        cursor.execute(event_query)
+        events = [{'EventID': row[0], 'EventName': row[1], 'Duedate': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+
+        return jsonify(events), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+
+####################################################
 ###########################Events###########################
 @app.route('/events', methods=['POST'])
 def create_event():
