@@ -105,6 +105,7 @@ def create_account():
         return redirect(url_for('login'))
     return render_template('create_account.html', message=None) 
 
+<<<<<<< HEAD
 
 ########################### Course Content ###########################
 
@@ -281,6 +282,8 @@ def add_item():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+=======
+>>>>>>> parent of bf1b4f1 (working in progress)
 
 ########################### Events ###########################
 @app.route('/events', methods=['POST'])
@@ -446,7 +449,6 @@ def get_replies(main_thread_id):
 
 
 ########################### Course Content ###########################
-
 @app.route('/content/<course_id>', methods=['GET']) 
 def get_content(course_id):
     try:
