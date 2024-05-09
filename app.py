@@ -59,6 +59,15 @@ def login():
                 mesage = 'Please enter correct username / password !'
     return render_template('login.html', mesage = mesage)
 
+@app.route('/logout')
+def logout():
+    session.pop('loggedin', None)
+    session.pop('UserID', None)
+    session.pop('FirstName', None)
+    session.pop('LastName', None)
+    session.pop('uType', None)
+    return redirect(url_for('login'))
+
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'POST':
