@@ -43,7 +43,7 @@ def create_course():
         return jsonify({'error': str(e)}), 500
     
 
-
+#Retrieve all courses#
 @app.route('/get_all_courses', methods=['GET'])
 def get_all_courses():
     try:
@@ -62,43 +62,50 @@ def get_all_courses():
     except mysql.connector.Error as e:
         return jsonify({'error': str(e)}), 500
 
-
-
+######################## start of corrections###############################
+#Retrieve courses for a student #
 @app.route('/courses/student/<int:student_id>', methods=['GET'])
-
 def get_courses_for_student(student_id):
     try:
-        connection= get_db_connection()
-        cursor=connection.cursor()
-        query = f"SELECT * FROM Student WHERE StudentID = {student_id}"
-        cursor.execute(query)
-        result = cursor.fetchall()
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Retrieve courses for the given student
+        query = """SELECT CourseID, CourseName, CourseCode FROM Course WHERE CourseID IN (
+            SELECT CourseID
+            FROM Enroll
+            WHERE StudentID = %s) """
+        cursor.execute(query, (student_id,))
+        courses = [{'CourseID': row[0], 'CourseName': row[1], 'CourseCode': row[2]} for row in cursor.fetchall()]
 
         cursor.close()
         connection.close()
         
-        return jsonify(result), 200
+        return jsonify(courses), 200
     except mysql.connector.Error as e:
         return jsonify({'Error': str(e)}), 500
-
+    
 # Retrieve courses taught by a particular lecturer
-@app.route('/courses/lecturer/<lecturer_id>', methods=['GET'])
+@app.route('/courses/lecturer/<int:lecturer_id>', methods=['GET'])
 def get_courses_for_lecturer(lecturer_id):
     try:
-        connection= get_db_connection()
-        cursor=connection.cursor()
-        query = f"SELECT * FROM Lecturer WHERE LecID = {lecturer_id}"
-        cursor.execute(query)
-        result = cursor.fetchall()
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Retrieve courses taught by the lecturer
+        query = """SELECT CourseID, CourseName, CourseCode
+            FROM Course WHERE CourseID IN ( 
+                SELECT CourseID FROM Teaches WHERE UserID = %s
+            )"""
+        cursor.execute(query, (lecturer_id,))
+        courses = [{'CourseID': row[0], 'CourseName': row[1], 'CourseCode': row[2]} for row in cursor.fetchall()]
 
         cursor.close()
         connection.close()
         
-        return jsonify(result), 200
+        return jsonify(courses), 200
     except mysql.connector.Error as e:
         return jsonify({'Error': str(e)}), 500
-
-
 
 
 @app.route('/register_course', methods=['POST'])
@@ -115,7 +122,7 @@ def register_course():
 
         if Role == 'student':
 
-            query = "SELECT * FROM Assign WHERE StudentID = %s AND CourseID = %s"
+            query = "SELECT * FROM Teaches WHERE UserID = %s AND CourseID = %s"
             cursor.execute(query, (UserID, CourseID))
             existing_registration = cursor.fetchone()
             
@@ -123,7 +130,7 @@ def register_course():
                 return jsonify({'Error': 'Student is already enrolled in the course'}), 400
             
             
-            query = "INSERT INTO Assign (StudentID, CourseID) VALUES (%s, %s)"
+            query = "INSERT INTO Teaches (UserID, CourseID) VALUES (%s, %s)"
             cursor.execute(query, (UserID, CourseID))
         elif Role == 'lecturer':
 
@@ -146,10 +153,11 @@ def register_course():
         return jsonify({'Message': 'Registration successful'}), 201
     except mysql.connector.Error as e:
         return jsonify({'Error': str(e)}), 500
+        
+############################## end of corrections#########################
 
 
-
-
+#Retrieve members of  a course#
 @app.route('/course/members/<course_id>', methods=['GET'])
 def get_members_of_course(course_id):
     try:
@@ -175,7 +183,7 @@ def get_members_of_course(course_id):
         return jsonify({'error': str(e)}), 500
 
 
-
+#Retrieve calendar events for a course#
 @app.route('/course/events/<course_id>', methods=['GET'])
 def get_course_events(course_id):
     try:
@@ -193,7 +201,7 @@ def get_course_events(course_id):
     except mysql.connector.Error as e:
         return jsonify({'error': str(e)}), 500
     
-
+#Retrieve Calendar events for student based on date#
 @app.route('/student/events/<int:student_id>/<date>', methods=['GET'])
 def get_events_for_student(student_id, date):
     try:
