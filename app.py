@@ -4,7 +4,6 @@ from functools import wraps
 import mysql.connector
 import MySQLdb.cursors
 from datetime import date
-import bcrypt
 
 app = Flask(__name__)
    
@@ -24,14 +23,6 @@ def login_required(route_function):
         return route_function(*args, **kwargs)
     return decorated_function
 
-def hash_password(password):
-    """Hashes the password using bcrypt."""
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-def verify_password(plain_password, hashed_password):
-    """Verifies if the plain password matches the hashed password."""
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
-
 @app.route('/')
 @app.route('/login', methods =['GET', 'POST'])
 def login():
@@ -40,21 +31,24 @@ def login():
         username = request.form['username']        
         password = request.form['password']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM Account WHERE UserID = % s AND Pass = % s', (username, password, ))
+        cursor.execute('SELECT * FROM sms_user WHERE username = % s AND password = % s', (username, password, ))
         user = cursor.fetchone()
         if user:
             session['loggedin'] = True
-            session['username'] = user['UserID']
-            session['fname'] = user['FirstName']
-            session['lname'] = user['LastName']
-            session['role'] = user['uType']
+            session['username'] = user['user_id']
+            session['name'] = user['name']
+            session['email'] = user['email']
+            session['role'] = user['role']
             mesage = 'Logged in successfully !'            
-            if user['uType'] == 'Admin':
-                return redirect(url_for('admin_dashboard'))
-            elif user['uType'] == 'Lecturer':
-                return redirect(url_for('lecturer_dashboard'))
-            elif user['uType'] == 'Student':
-                return redirect(url_for('student_dashboard'))
+            if 'username' in session:
+                role = session['role']
+                if role == 'Admin':
+                    return redirect(url_for('admin_dashboard'))
+                elif role == 'Lecturer':
+                    return redirect(url_for('lecturer_dashboard'))
+                elif role == 'Student':
+                    return redirect(url_for('student_dashboard'))
+            return redirect(url_for('login'))
         else:
             mesage = 'Please enter correct username / password !'
     return render_template('login.html', mesage = mesage)
@@ -62,65 +56,143 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('loggedin', None)
-    session.pop('UserID', None)
-    session.pop('FirstName', None)
-    session.pop('LastName', None)
-    session.pop('uType', None)
+    session.pop('userid', None)
+    session.pop('email', None)
+    session.pop('name', None)
+    session.pop('role', None)
     return redirect(url_for('login'))
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'POST':
-        fname = request.form['fname']
-        lname = request.form['lname']
-        user_name = request.form['userid']
+        name = request.form['name']
+        user_name = request.form['username']
+        e_mail = request.form['email']
         pword = request.form['password']
-        role = request.form['role']
+        sex = request.form['gender']
+        type = request.form['role']
 
-        # Insert user into Account table
+        # Insert user into sms_user table
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("INSERT INTO Account (FirstName, LastName, UserID, Pass, uType) VALUES (%s, %s, %s, %s, %s)",
-                           (fname, lname, user_name, pword, role))
+        cursor.execute("INSERT INTO sms_user (name, username, email, password, gender, role) VALUES (%s, %s, %s, %s, %s, %s)",
+                           (name, user_name, e_mail, pword, sex, type))
         mysql.connection.commit()
 
         # Get the user_id of the newly inserted user
         user_id = cursor.lastrowid
 
-        # Redirect to respective dashboard based on role
-        if role == 'Admin':
+        # Insert user into respective table based on user_type
+        if type == 'Admin':
+            cursor.execute("INSERT INTO sms_admin (admin_name, gender, email, user_id) VALUES (%s, %s, %s, %s)",
+                               (name, sex, e_mail, user_id))
+            mysql.connection.commit()
+            cursor.close()
             return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
-        elif role == 'Lecturer':
+        elif type == 'Lecturer':
+            cursor.execute("INSERT INTO sms_lecturers (lecturer_name, gender, email, user_id) VALUES (%s, %s, %s, %s)",
+                               (name, sex, e_mail, user_id))
+            mysql.connection.commit()
+            cursor.close()
             return redirect(url_for('lecturer_dashboard'))  # Redirect to lecturer dashboard
-        elif role == 'Student':
+        elif type == 'Student':
+            cursor.execute("INSERT INTO sms_students (student_name, gender, email, user_id) VALUES (%s, %s, %s, %s)",
+                               (name, sex, e_mail, user_id))
+            mysql.connection.commit()
+            cursor.close()
             return redirect(url_for('student_dashboard'))  # Redirect to student dashboard
 
         flash('User added successfully', 'success')
         return redirect(url_for('login'))
-    return render_template('create_account.html', message=None)
+    return render_template('create_account.html', message=None) 
 
-@app.route('/admin/dashboard')
-@login_required
-def admin_dashboard():
-    if 'username' in session and session['role'] == 'Admin':
-        return render_template('admin_dashboard.html')
-    else:
-        return redirect(url_for('login'))
 
-@app.route('/lecturer/dashboard')
-@login_required
-def lecturer_dashboard():
-    if 'username' in session and session['role'] == 'Lecturer':
-        return render_template('lecturer_dashboard.html')
-    else:
-        return redirect(url_for('login'))
+########################### Course Content ###########################
 
-@app.route('/student/dashboard')
-@login_required
-def student_dashboard():
-    if 'username' in session and session['role'] == 'Student':
-        return render_template('student_dashboard.html')
-    else:
-        return redirect(url_for('login'))
+@app.route("/courses", methods =['GET', 'POST'])
+def courses():
+    if 'loggedin' in session:  
+       cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+       cursor.execute('SELECT c.course_id, c.course_name, l.lecturer_id, l.lecturer_name FROM sms_courses c LEFT JOIN sms_lecturers l ON c.lecturer_id = l.lecturer_id')
+       courses = cursor.fetchall()
+           
+       cursor.execute('SELECT * FROM sms_lecturers')
+       lecturers = cursor.fetchall()
+        
+       return render_template("courses.html", courses = courses, lecturers = lecturers)
+    return redirect(url_for('login'))
+@app.route('/content/<course_id>', methods=['GET']) 
+
+def get_content(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = f"SELECT * FROM Section WHERE CourseID = {course_id}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        courseContent = []
+        for CourseID, SectionID in result:
+            items = []
+            query2 = f"SELECT * FROM Item WHERE SectionID = {SectionID}"
+            cursor.execute(query2)
+            result2 = cursor.fetchall()
+
+            for ItemID, SectionID, title, itype in result2:
+                items.append({
+                    'ItemID': ItemID,
+                    'SectionID': SectionID,
+                    'title': title,
+                    'itype': itype
+                })
+
+            courseContent.append({
+                'CourseID': CourseID,
+                'SectionID': SectionID,
+                'Items': items
+            })
+        cursor.close()
+        connection.close()
+        return jsonify(courseContent) 
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/section', methods=['POST'])
+def add_section():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        CourseID = content['CourseID'] 
+        SectionID = content['SectionID']        
+        query = "INSERT INTO Section (CourseID, SectionID) VALUES (%s, %s)"
+        cursor.execute(query, (CourseID, SectionID))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Course section created"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/items', methods=['POST'])
+def add_item():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        SectionID = content['SectionID']
+        ItemID = content['ItemID']
+        title = content['title']
+        itype = content['itype']
+        query = "INSERT INTO Item (SectionID, ItemID, title, itype) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (SectionID, ItemID, title, itype))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Course item added"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 
 ########################### Course Content ###########################
 
@@ -373,6 +445,79 @@ def get_replies(main_thread_id):
 
 
 
+########################### Course Content ###########################
+
+@app.route('/content/<course_id>', methods=['GET']) 
+def get_content(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = f"SELECT * FROM Section WHERE CourseID = {course_id}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        courseContent = []
+        for CourseID, SectionID in result:
+            items = []
+            query2 = f"SELECT * FROM Item WHERE SectionID = {SectionID}"
+            cursor.execute(query2)
+            result2 = cursor.fetchall()
+
+            for ItemID, SectionID, title, itype in result2:
+                items.append({
+                    'ItemID': ItemID,
+                    'SectionID': SectionID,
+                    'title': title,
+                    'itype': itype
+                })
+
+            courseContent.append({
+                'CourseID': CourseID,
+                'SectionID': SectionID,
+                'Items': items
+            })
+        cursor.close()
+        connection.close()
+        return jsonify(courseContent) 
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/section', methods=['POST'])
+def add_section():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        CourseID = content['CourseID'] 
+        SectionID = content['SectionID']        
+        query = "INSERT INTO Section (CourseID, SectionID) VALUES (%s, %s)"
+        cursor.execute(query, (CourseID, SectionID))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Course section created"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/items', methods=['POST'])
+def add_item():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        SectionID = content['SectionID']
+        ItemID = content['ItemID']
+        title = content['title']
+        itype = content['itype']
+        query = "INSERT INTO Item (SectionID, ItemID, title, itype) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (SectionID, ItemID, title, itype))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Course item added"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 ########################### Assignments ###########################
 @app.route('/assignments/<course_id>', methods=['GET']) 
