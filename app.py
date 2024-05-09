@@ -1,129 +1,391 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, make_response
-from flask_mysqldb import MySQL
-from functools import wraps
+from flask import Flask, request, make_response, jsonify
 import mysql.connector
-import MySQLdb.cursors
-from datetime import date
-import bcrypt
+
 
 app = Flask(__name__)
-   
-app.secret_key = 'abcd21234455'  
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'comp3161'
-app.config['MYSQL_PASSWORD'] = 'password123!'
-app.config['MYSQL_DB'] = 'uwi'
-  
-mysql = MySQL(app)
+app.json.sort_keys = False
+def get_db_connection():
+    connection = mysql.connector.connect(
+    host = 'localhost',
+    user= 'comp3161',
+    password = 'password123!',
+    database = 'uwi2')
+    return connection
 
-def login_required(route_function):
-    @wraps(route_function)
-    def decorated_function(*args, **kwargs):
-        if 'loggedin' not in session:
-            return redirect(url_for('login'))
-        return route_function(*args, **kwargs)
-    return decorated_function
+###create course###
+@app.route('/create_course', methods=['POST'])
+def create_course():
 
-def hash_password(password):
-    """Hashes the password using bcrypt."""
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    try:
+        connection= get_db_connection()
+        cursor=connection.cursor()
+        content = request.json
+        AdminID = content ['AdminID'] 
+        CourseName = content ['CourseName']
+    
+        
+        query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'admin'"
+        cursor.execute(query, (AdminID,))
+        result = cursor.fetchall()
 
-def verify_password(plain_password, hashed_password):
-    """Verifies if the plain password matches the hashed password."""
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
+        if len(result) == 0:
+            return jsonify({'Error': 'Unauthorized'}), 401
 
-@app.route('/')
-@app.route('/login', methods =['GET', 'POST'])
-def login():
-    mesage = ''
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
-        username = request.form['username']        
-        password = request.form['password']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM Account WHERE UserID = % s AND Pass = % s', (username, password, ))
-        user = cursor.fetchone()
-        if user:
-            session['loggedin'] = True
-            session['username'] = user['UserID']
-            session['fname'] = user['FirstName']
-            session['lname'] = user['LastName']
-            session['role'] = user['uType']
-            mesage = 'Logged in successfully !'            
-            if user['uType'] == 'Admin':
-                return redirect(url_for('admin_dashboard'))
-            elif user['uType'] == 'Lecturer':
-                return redirect(url_for('lecturer_dashboard'))
-            elif user['uType'] == 'Student':
-                return redirect(url_for('student_dashboard'))
-            else:
-                mesage = 'Please enter correct username / password !'
-    return render_template('login.html', mesage = mesage)
+        query = "INSERT INTO Courses (CourseName) VALUES (%s)"
+        cursor.execute(query, (CourseName))
 
-@app.route('/logout')
-def logout():
-    session.pop('loggedin', None)
-    session.pop('UserID', None)
-    session.pop('FirstName', None)
-    session.pop('LastName', None)
-    session.pop('uType', None)
-    return redirect(url_for('login'))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'message': 'Course created successfully'}), 201
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+    
 
-@app.route('/create_account', methods=['GET', 'POST'])
-def create_account():
-    if request.method == 'POST':
-        fname = request.form['fname']
-        lname = request.form['lname']
-        user_name = request.form['userid']
-        pword = request.form['password']
-        role = request.form['role']
+#Retrieve all courses#
+@app.route('/get_all_courses', methods=['GET'])
+def get_all_courses():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        
+        query = "SELECT * FROM Course"
+        cursor.execute(query)
+        
+        courses = cursor.fetchall()
+
+        cursor.close()
+
+        return jsonify(courses), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+
+######################## start of corrections###############################
+#Retrieve courses for a student #
+@app.route('/courses/student/<int:student_id>', methods=['GET'])
+def get_courses_for_student(student_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Retrieve courses for the given student
+        query = """SELECT CourseID, CourseName, CourseCode FROM Course WHERE CourseID IN (
+            SELECT CourseID
+            FROM Enroll
+            WHERE StudentID = %s) """
+        cursor.execute(query, (student_id,))
+        courses = [{'CourseID': row[0], 'CourseName': row[1], 'CourseCode': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+        
+        return jsonify(courses), 200
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
+    
+# Retrieve courses taught by a particular lecturer
+@app.route('/courses/lecturer/<int:lecturer_id>', methods=['GET'])
+def get_courses_for_lecturer(lecturer_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Retrieve courses taught by the lecturer
+        query = """SELECT CourseID, CourseName, CourseCode
+            FROM Course WHERE CourseID IN ( 
+                SELECT CourseID FROM Teaches WHERE UserID = %s
+            )"""
+        cursor.execute(query, (lecturer_id,))
+        courses = [{'CourseID': row[0], 'CourseName': row[1], 'CourseCode': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+        
+        return jsonify(courses), 200
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
 
 
-        # Insert user into Account table
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("INSERT INTO Account (FirstName, LastName, UserID, Pass, uType) VALUES (%s, %s, %s, %s, %s)",
-                           (fname, lname, user_name, pword, role))
-        mysql.connection.commit()
+@app.route('/register_course', methods=['POST'])
+def register_course():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
 
-        # Get the user_id of the newly inserted user
-        user_id = cursor.lastrowid
+        UserID = content ['UserID']  # ID of the user registering for the course
+        CourseID = content ['CourseID'] # ID of the course being registered for
+        Role = content ['Role']     # Role of the user (student or lecturer)
 
-        # Redirect to respective dashboard based on role
-        if role == 'Admin':
-            return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
-        elif role == 'Lecturer':
-            return redirect(url_for('lecturer_dashboard'))  # Redirect to lecturer dashboard
-        elif role == 'Student':
-            return redirect(url_for('student_dashboard'))  # Redirect to student dashboard
 
-        flash('User added successfully', 'success')
-        return redirect(url_for('login'))
-    return render_template('create_account.html', message=None)
+        if Role == 'student':
+
+            query = "SELECT * FROM Teaches WHERE UserID = %s AND CourseID = %s"
+            cursor.execute(query, (UserID, CourseID))
+            existing_registration = cursor.fetchone()
             
-@app.route('/admin/dashboard')
-@login_required
-def admin_dashboard():
-    if 'username' in session and session['role'] == 'Admin':
-        return render_template('admin_dashboard.html')
-    else:
-        return redirect(url_for('login'))
+            if existing_registration:
+                return jsonify({'Error': 'Student is already enrolled in the course'}), 400
+            
+            
+            query = "INSERT INTO Teaches (UserID, CourseID) VALUES (%s, %s)"
+            cursor.execute(query, (UserID, CourseID))
+        elif Role == 'lecturer':
 
-@app.route('/lecturer/dashboard')
-@login_required
-def lecturer_dashboard():
-    if 'username' in session and session['role'] == 'Lecturer':
-        return render_template('lecturer_dashboard.html')
-    else:
-        return redirect(url_for('login'))
+            query = "SELECT * FROM Course WHERE CourseID = %s"
+            cursor.execute(query, (CourseID,))
+            existing_assignment = cursor.fetchone()
+            
+            if existing_assignment and existing_assignment[3] is not None:
+                return jsonify({'Error': 'Course already has a lecturer assigned'}), 400
+            
+            query = "UPDATE Course SET LecID = %s WHERE CourseID = %s"
+            cursor.execute(query, (UserID, CourseID))
+        else:
+            return jsonify({'error': 'Invalid role'}), 400
 
-@app.route('/student/dashboard')
-@login_required
-def student_dashboard():
-    if 'username' in session and session['role'] == 'Student':
-        return render_template('student_dashboard.html')
-    else:
-        return redirect(url_for('login'))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'Message': 'Registration successful'}), 201
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
 
-########################### Course Content ###########################
+#Retrieve members of  a course#
+@app.route('/course/members/<int:course_id>', methods=['GET'])
+def get_members_of_course(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        student_query = """SELECT Account.UserID, Account.FirstName, Account.LastName 
+            FROM Account JOIN Enroll ON Account.UserID = Enroll.StudentID WHERE Enroll.CourseID = %s"""
+        cursor.execute(student_query, (course_id,))
+        students = [{'UserID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
+
+        lecturer_query = """SELECT Account.UserID, Account.FirstName, Account.LastName FROM Account
+            JOIN Teaches ON Account.UserID = Teaches.UserID
+            WHERE Teaches.CourseID = %s"""
+        cursor.execute(lecturer_query, (course_id,))
+        lecturer = [{'UserID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+
+        course_members = {'students': students, 'lecturer': lecturer}
+        
+        return jsonify(course_members), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+        
+############################## end of corrections#########################
+
+
+#Retrieve calendar events for a course#
+@app.route('/course/events/<course_id>', methods=['GET'])
+def get_course_events(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        event_query = f"SELECT EventID, EventName, Duedate FROM Event WHERE CourseID = {course_id}"
+        cursor.execute(event_query)
+        events = [{'EventID': row[0], 'EventName': row[1], 'Duedate': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+
+        return jsonify(events), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+    
+#Retrieve Calendar events for student based on date#
+@app.route('/student/events/<int:student_id>/<date>', methods=['GET'])
+def get_events_for_student(student_id, date):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        # Retrieve all calendar events for the given student on the given date
+        event_query = f"SELECT EventID, EventName, Duedate FROM Event WHERE CourseID IN (SELECT CourseID FROM Enroll WHERE StudentID = {student_id}) AND DATE(Duedate) = '{date}'"
+        cursor.execute(event_query)
+        events = [{'EventID': row[0], 'EventName': row[1], 'Duedate': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+
+        return jsonify(events), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+
+####################################################
+###########################Events###########################
+@app.route('/events', methods=['POST'])
+def create_event():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        EventID = content['EventID']
+        CourseID = content['CourseID']
+        EventName = content['EventName']
+        Duedate = content['Duedate']
+        query = "INSERT INTO Event (EventID, CourseID, EventName, Duedate) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (EventID, CourseID, EventName, Duedate))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Event added"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+###########################Forums###########################
+@app.route('/forums/<course_id>', methods=['GET'])
+def get_forums(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = f"SELECT * FROM Forum WHERE CourseID = {course_id}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        forums = []
+        for ForumID, CourseID, ForumName in result:
+            forums.append({
+                'ForumID': ForumID,
+                'CourseID': CourseID,
+                'ForumName': ForumName
+            })
+        cursor.close()
+        connection.close()
+        return jsonify(forums) 
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/forums', methods=['POST'])
+def create_forum():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        ForumID = content['ForumID']
+        CourseID = content['CourseID']
+        ForumName = content['ForumName']
+        query = "INSERT INTO Forum (ForumID, CourseID, ForumName) VALUES (%s, %s, %s)"
+        cursor.execute(query, (ForumID, CourseID, ForumName))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Forum added"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+###########################Threads###########################
+@app.route('/discussion_threads/<forum_id>', methods=['GET']) 
+def get_discussion_threads(forum_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = f"SELECT * FROM Thread WHERE ForumID = {forum_id}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        threads = []
+        for ThreadID, ForumID, Title, Body, created_by in result:
+            threads.append({
+                'ThreadID': ThreadID,
+                'ForumID': ForumID,
+                'Title': Title,
+                'Body': Body,
+                'created_by' : created_by
+            })
+        cursor.close()
+        connection.close()
+        return jsonify(threads) 
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/discussion_threads', methods=['POST'])
+def create_discussion_threads():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        ThreadID = content['ThreadID']
+        ForumID = content['ForumID']
+        Title = content['Title']
+        Body = content['Body']
+        created_by = content['created_by']
+        query = "INSERT INTO Thread (ThreadID, ForumID, Title, Body, created_by) VALUES (%s, %s, %s, %s, %s)"
+        cursor.execute(query, (ThreadID, ForumID, Title, Body, created_by))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "Discussion Thread added"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+###########################Replies###########################
+@app.route('/replies', methods=['POST'])
+def create_reply():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        MainThreadID = content['MainThreadID']
+        ReplyID = content['ReplyID']
+        ReplyBody = content['ReplyBody']
+        created_by = content['created_by']
+        query = "INSERT INTO Replies (MainThreadID, ReplyID, ReplyBody, created_by) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (MainThreadID, ReplyID,ReplyBody, created_by))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success": "Reply added"})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@app.route('/replies/<main_thread_id>', methods=['GET']) 
+def get_replies(main_thread_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        def fetch_replies(thread_id):
+            query = f"SELECT * FROM Replies WHERE MainThreadID = {thread_id}"
+            cursor.execute(query)
+            result = cursor.fetchall()
+
+            replies = []
+            for MainThreadID, ReplyID, ReplyBody, created_by in result:
+                reply = {
+                    'ReplyID': ReplyID,                
+                    'ReplyBody': ReplyBody,
+                    'created_by': created_by,
+                    'replies': []  
+                }
+                reply['replies'] = fetch_replies(ReplyID)
+                replies.append(reply)
+
+            return replies
+        all_replies = fetch_replies(main_thread_id)
+
+        cursor.close()
+        connection.close()
+        return jsonify(all_replies) 
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+
+###########################Course Content###########################
 @app.route('/content/<course_id>', methods=['GET']) 
 def get_content(course_id):
     try:
@@ -196,168 +458,7 @@ def add_item():
     except Exception as e:
         return jsonify({'error': str(e)})
 
-########################### Events ###########################
-@app.route('/events', methods=['POST'])
-def create_event():
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        content = request.json
-        EventID = content['EventID']
-        CourseID = content['CourseID']
-        EventName = content['EventName']
-        Duedate = content['Duedate']
-        query = "INSERT INTO Event (EventID, CourseID, EventName, Duedate) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (EventID, CourseID, EventName, Duedate))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return jsonify({"success" : "Event added"})
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-########################### Forums ###########################
-@app.route('/forums/<course_id>', methods=['GET'])
-def get_forums(course_id):
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = f"SELECT * FROM Forum WHERE CourseID = {course_id}"
-        cursor.execute(query)
-        result = cursor.fetchall()
-
-        forums = []
-        for ForumID, CourseID, ForumName in result:
-            forums.append({
-                'ForumID': ForumID,
-                'CourseID': CourseID,
-                'ForumName': ForumName
-            })
-        cursor.close()
-        connection.close()
-        return jsonify(forums) 
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-@app.route('/forums', methods=['POST'])
-def create_forum():
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        content = request.json
-        ForumID = content['ForumID']
-        CourseID = content['CourseID']
-        ForumName = content['ForumName']
-        query = "INSERT INTO Forum (ForumID, CourseID, ForumName) VALUES (%s, %s, %s)"
-        cursor.execute(query, (ForumID, CourseID, ForumName))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return jsonify({"success" : "Forum added"})
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-########################### Threads ###########################
-@app.route('/discussion_threads/<forum_id>', methods=['GET']) 
-def get_discussion_threads(forum_id):
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = f"SELECT * FROM Thread WHERE ForumID = {forum_id}"
-        cursor.execute(query)
-        result = cursor.fetchall()
-
-        threads = []
-        for ThreadID, ForumID, Title, Body, created_by in result:
-            threads.append({
-                'ThreadID': ThreadID,
-                'ForumID': ForumID,
-                'Title': Title,
-                'Body': Body,
-                'created_by' : created_by
-            })
-        cursor.close()
-        connection.close()
-        return jsonify(threads) 
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-@app.route('/discussion_threads', methods=['POST'])
-def create_discussion_threads():
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        content = request.json
-        ThreadID = content['ThreadID']
-        ForumID = content['ForumID']
-        Title = content['Title']
-        Body = content['Body']
-        created_by = content['created_by']
-        query = "INSERT INTO Thread (ThreadID, ForumID, Title, Body, created_by) VALUES (%s, %s, %s, %s, %s)"
-        cursor.execute(query, (ThreadID, ForumID, Title, Body, created_by))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return jsonify({"success" : "Discussion Thread added"})
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-########################### Replies ###########################
-@app.route('/replies', methods=['POST'])
-def create_reply():
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        content = request.json
-        MainThreadID = content['MainThreadID']
-        ReplyID = content['ReplyID']
-        ReplyBody = content['ReplyBody']
-        created_by = content['created_by']
-        query = "INSERT INTO Replies (MainThreadID, ReplyID, ReplyBody, created_by) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (MainThreadID, ReplyID,ReplyBody, created_by))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return jsonify({"success": "Reply added"})
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-
-@app.route('/replies/<main_thread_id>', methods=['GET']) 
-def get_replies(main_thread_id):
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        
-        def fetch_replies(thread_id):
-            query = f"SELECT * FROM Replies WHERE MainThreadID = {thread_id}"
-            cursor.execute(query)
-            result = cursor.fetchall()
-
-            replies = []
-            for MainThreadID, ReplyID, ReplyBody, created_by in result:
-                reply = {
-                    'ReplyID': ReplyID,                
-                    'ReplyBody': ReplyBody,
-                    'created_by': created_by,
-                    'replies': []  
-                }
-                reply['replies'] = fetch_replies(ReplyID)
-                replies.append(reply)
-
-            return replies
-        all_replies = fetch_replies(main_thread_id)
-
-        cursor.close()
-        connection.close()
-        return jsonify(all_replies) 
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-########################### Assignments ###########################
+###########################Assignments###########################
 @app.route('/assignments/<course_id>', methods=['GET']) 
 def get_assignments(course_id): #Should it be assignments for a course or student or event?
     try:
@@ -423,7 +524,7 @@ def add_assignment_grade(assignment_id):
     except Exception as e:
         return jsonify({'error': str(e)})
 
-########################### Reports ###########################
+###########################Reports###########################
 @app.route('/courses_with_50plus', methods=['GET'])
 def get_courses_with_50plus_students():
     try:
@@ -561,6 +662,3 @@ def get_top10_students():
 
     except Exception as e:
         return jsonify({'error': str(e)})
-    
-if __name__ == "__main__":
-    app.run(debug=True)
