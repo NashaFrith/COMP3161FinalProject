@@ -1177,6 +1177,9 @@ INSERT INTO Thread (ThreadID, ForumID, Title, Body,created_by) VALUES ('177','1'
 INSERT INTO Replies (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('177','370','Shoulder eye participant employee manage add interview reflect effort recent be explain.','5');
 INSERT INTO Replies (MainThreadID, ReplyID,ReplyBody,created_by) VALUES ('177','206','Huge itself change fear still child wish key down time bit reach open exist tough nature offer under thousand such place majority wrong turn pretty.','22');
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> parent of bf1b4f1 (working in progress)
 >>>>>>> parent of dc9f70b (updated login works)
+=======
+>>>>>>> parent of bf1b4f1 (working in progress)
