@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "18783f81-f478-4e4a-8038-fafe6ecbde82",
+		"_postman_id": "35627a20-091b-453c-b540-c186e340d12e",
 		"name": "DBMS FLASK API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-		"_exporter_id": "34408591"
+		"_exporter_id": "33630181"
 	},
 	"item": [
 		{
@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"EventID\": \"1\", \"CourseID\": \"1\", \"EventName\": \"New Event\", \"Duedate\": \"2024-04-27\"}",
+					"raw": "{\"CourseID\": \"1\", \"EventName\": \"New Event\", \"Duedate\": \"2024-04-27\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -31,7 +31,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"ForumID\": \"1\", \"CourseID\": \"1\", \"ForumName\": \"New Forum\"}",
+					"raw": "{\"CourseID\": \"1\", \"ForumName\": \"New Forum\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -49,7 +49,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"ThreadID\": \"1\", \"ForumID\": \"1\", \"Title\": \"New Thread\", \"Body\": \"Discussion Body\", \"created_by\": \"User\"}",
+					"raw": "{\"ForumID\": \"1\", \"Title\": \"New Thread\", \"Body\": \"Discussion Body\", \"created_by\": \"User\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -79,13 +79,31 @@
 			"response": []
 		},
 		{
+			"name": "Create a reply for a reply",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"MainThreadID\": \"1000\", \"ReplyBody\": \"Reply Body\", \"created_by\": \"User\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/replies"
+			},
+			"response": []
+		},
+		{
 			"name": "Add section",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"CourseID\": \"1\", \"SectionID\": \"1\"}",
+					"raw": "{\"CourseID\": \"1\", \"SectionName\": \"New Section\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -103,7 +121,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"SectionID\": \"1\", \"ItemID\": \"1\", \"title\": \"New Item\", \"itype\": \"Type\"}",
+					"raw": "{\"SectionID\": \"1\", \"title\": \"New Item\", \"itype\": \"Type\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -133,13 +151,31 @@
 			"response": []
 		},
 		{
+			"name": "Create course",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"AdminID\": 1,\r\n    \"CourseName\": \"New Course\",\r\n    \"CourseCode\" : \"NEW0005\",\r\n    \"LecID\" : \"2202\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/create_course"
+			},
+			"response": []
+		},
+		{
 			"name": "Register for a course",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"UserID\": \"2\",\r\n    \"CourseID\": \"COMP3161\",\r\n    \"Role\": \"student\"\r\n}",
+					"raw": "{\r\n    \"UserID\": \"50\",\r\n    \"CourseID\": \"1\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -153,18 +189,45 @@
 		{
 			"name": "Add assignment grade",
 			"request": {
-				"method": "PUT",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"Grade\": \"A\"}",
+					"raw": "{\"Grade\": 89}",
 					"options": {
 						"raw": {
 							"language": "json"
 						}
 					}
 				},
-				"url": "http://127.0.0.1:5000/add_grade/{assignment_id}"
+				"url": "http://127.0.0.1:5000/add_grade/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses for a student",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/courses/student/2"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses for a lecturer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/courses/lecturer/2202"
+			},
+			"response": []
+		},
+		{
+			"name": "Retrieve members of a course",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/course/members/1"
 			},
 			"response": []
 		},
@@ -173,7 +236,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/forums/{course_id}"
+				"url": "http://127.0.0.1:5000/forums/1"
 			},
 			"response": []
 		},
@@ -182,7 +245,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/discussion_threads/{forum_id}"
+				"url": "http://127.0.0.1:5000/discussion_threads/1"
 			},
 			"response": []
 		},
@@ -191,7 +254,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/replies/{main_thread_id}"
+				"url": "http://127.0.0.1:5000/replies/1"
 			},
 			"response": []
 		},
@@ -200,7 +263,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/content/{course_id}"
+				"url": "http://127.0.0.1:5000/content/1"
 			},
 			"response": []
 		},
@@ -209,7 +272,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/assignments/{course_id}"
+				"url": "http://127.0.0.1:5000/assignments/1"
 			},
 			"response": []
 		},
@@ -255,33 +318,6 @@
 				"method": "GET",
 				"header": [],
 				"url": "http://127.0.0.1:5000/top10_students"
-			},
-			"response": []
-		},
-		{
-			"name": "Get courses for a student",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:5000/courses/student/1"
-			},
-			"response": []
-		},
-		{
-			"name": "Get courses for a lecturer",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:5000/courses/lecturer/<lecturerid>"
-			},
-			"response": []
-		},
-		{
-			"name": "Retrieve members of a course",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:5000/course/members/COMP3161"
 			},
 			"response": []
 		}
