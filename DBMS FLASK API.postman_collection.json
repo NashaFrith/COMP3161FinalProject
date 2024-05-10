@@ -133,6 +133,24 @@
 			"response": []
 		},
 		{
+			"name": "Register for a course",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"UserID\": \"2\",\r\n    \"CourseID\": \"COMP3161\",\r\n    \"Role\": \"student\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:5000/register_course"
+			},
+			"response": []
+		},
+		{
 			"name": "Add assignment grade",
 			"request": {
 				"method": "PUT",
@@ -169,7 +187,7 @@
 			"response": []
 		},
 		{
-			"name": "Get replies(error)",
+			"name": "Get replies",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -237,6 +255,33 @@
 				"method": "GET",
 				"header": [],
 				"url": "http://127.0.0.1:5000/top10_students"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses for a student",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/courses/student/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses for a lecturer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/courses/lecturer/<lecturerid>"
+			},
+			"response": []
+		},
+		{
+			"name": "Retrieve members of a course",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/course/members/COMP3161"
 			},
 			"response": []
 		}
