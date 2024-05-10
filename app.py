@@ -1,16 +1,62 @@
 from flask import Flask, request, make_response, jsonify
 import mysql.connector
 
-
 app = Flask(__name__)
 app.json.sort_keys = False
+
+
+
 def get_db_connection():
     connection = mysql.connector.connect(
     host = 'localhost',
     user= 'comp3161',
     password = 'password123!',
-    database = 'uwi2')
+    database = 'uwi')
     return connection
+
+################Register User ##################################
+@app.route('/user', methods=['POST'])
+def register_user():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+        FirstName = content['FirstName']
+        LastName = content['LastName']
+        uType = content['uType']
+        Pass = content['Pass']
+        query = "INSERT INTO Account (FirstName, LastName, uType, Pass) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (FirstName, LastName, uType, Pass))
+        connection.commit()
+
+        cursor.execute("SELECT MAX(UserID) FROM Account")
+        id = cursor.fetchone()[0]
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify({"success" : "User added",
+                        "message": f"Your assigned userID is {id}."})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+###############User Login################################        
+@app.route('/login', methods =['POST'])
+def login():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    content = request.json
+    username = content['UserID']
+    password = content['Password']
+    cursor.execute('SELECT * FROM Account WHERE UserID = %s AND Pass = %s', (username, password, ))
+    user = cursor.fetchone()
+
+    if user is not None:
+        return jsonify({"message": "User logged in successfully",
+                        "user":user}), 200
+    else:
+        return jsonify({"errors": "Invalid username or password"}), 400   
+            
+#######################Courses #############################
 
 ###create course###
 @app.route('/create_course', methods=['POST'])
@@ -37,10 +83,6 @@ def create_course():
 
         # Getting CourseID of the new created course
         course_id = cursor.lastrowid
-
-        # Link the course to a lecturer in the Teaches table
-        lecturer_link_query = "INSERT INTO Teaches (CourseID, UserID) VALUES (%s, %s)"
-        cursor.execute(lecturer_link_query, (course_id, admin_result[0])) 
 
         connection.commit()
         cursor.close()
@@ -69,7 +111,7 @@ def get_all_courses():
     except mysql.connector.Error as e:
         return jsonify({'error': str(e)}), 500
 
-######################## start of corrections###############################
+
 #Retrieve courses for a student #
 @app.route('/courses/student/<int:student_id>', methods=['GET'])
 def get_courses_for_student(student_id):
@@ -128,8 +170,8 @@ def register_course():
 
 
         if Role == 'student':
-
-            query = "SELECT * FROM Teaches WHERE UserID = %s AND CourseID = %s"
+            UserID = content ['StudentID']  # ID of the user registering for the course
+            query = "SELECT * FROM Enroll WHERE StudentID = %s AND CourseID = %s"
             cursor.execute(query, (UserID, CourseID))
             existing_registration = cursor.fetchone()
             
@@ -137,18 +179,19 @@ def register_course():
                 return jsonify({'Error': 'Student is already enrolled in the course'}), 400
             
             
-            query = "INSERT INTO Teaches (UserID, CourseID) VALUES (%s, %s)"
+            query = "INSERT INTO Enroll (StudentID, CourseID) VALUES (%s, %s)"
             cursor.execute(query, (UserID, CourseID))
         elif Role == 'lecturer':
 
-            query = "SELECT * FROM Course WHERE CourseID = %s"
+            UserID = content ['UserID']  # ID of the user registering for the course
+            query = "SELECT * FROM Teaches WHERE UserID = %s AND CourseID = %s"
             cursor.execute(query, (CourseID,))
             existing_assignment = cursor.fetchone()
             
             if existing_assignment and existing_assignment[3] is not None:
                 return jsonify({'Error': 'Course already has a lecturer assigned'}), 400
             
-            query = "UPDATE Course SET LecID = %s WHERE CourseID = %s"
+            query = "INSERT INTO Teaches (UserID, CourseID) VALUES (%s, %s)"
             cursor.execute(query, (UserID, CourseID))
         else:
             return jsonify({'error': 'Invalid role'}), 400
@@ -188,8 +231,6 @@ def get_members_of_course(course_id):
     except mysql.connector.Error as e:
         return jsonify({'error': str(e)}), 500
         
-############################## end of corrections#########################
-
 
 #Retrieve calendar events for a course#
 @app.route('/course/events/<course_id>', methods=['GET'])
@@ -236,12 +277,12 @@ def create_event():
         connection = get_db_connection()
         cursor = connection.cursor()
         content = request.json
-        EventID = content['EventID']
+        #EventID = content['EventID']
         CourseID = content['CourseID']
         EventName = content['EventName']
         Duedate = content['Duedate']
-        query = "INSERT INTO Event (EventID, CourseID, EventName, Duedate) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (EventID, CourseID, EventName, Duedate))
+        query = "INSERT INTO Event (CourseID, EventName, Duedate) VALUES ( %s, %s, %s)"
+        cursor.execute(query, (CourseID, EventName, Duedate))
         connection.commit()
         cursor.close()
         connection.close()
@@ -279,11 +320,11 @@ def create_forum():
         connection = get_db_connection()
         cursor = connection.cursor()
         content = request.json
-        ForumID = content['ForumID']
+        #ForumID = content['ForumID']
         CourseID = content['CourseID']
         ForumName = content['ForumName']
-        query = "INSERT INTO Forum (ForumID, CourseID, ForumName) VALUES (%s, %s, %s)"
-        cursor.execute(query, (ForumID, CourseID, ForumName))
+        query = "INSERT INTO Forum (CourseID, ForumName) VALUES ( %s, %s)"
+        cursor.execute(query, (CourseID, ForumName))
         connection.commit()
         cursor.close()
         connection.close()
@@ -323,13 +364,13 @@ def create_discussion_threads():
         connection = get_db_connection()
         cursor = connection.cursor()
         content = request.json
-        ThreadID = content['ThreadID']
+        #ThreadID = content['ThreadID']
         ForumID = content['ForumID']
         Title = content['Title']
         Body = content['Body']
         created_by = content['created_by']
-        query = "INSERT INTO Thread (ThreadID, ForumID, Title, Body, created_by) VALUES (%s, %s, %s, %s, %s)"
-        cursor.execute(query, (ThreadID, ForumID, Title, Body, created_by))
+        query = "INSERT INTO Thread (ForumID, Title, Body, created_by) VALUES ( %s, %s, %s, %s)"
+        cursor.execute(query, (ForumID, Title, Body, created_by))
         connection.commit()
         cursor.close()
         connection.close()
@@ -345,11 +386,11 @@ def create_reply():
         cursor = connection.cursor()
         content = request.json
         MainThreadID = content['MainThreadID']
-        ReplyID = content['ReplyID']
+        #ReplyID = content['ReplyID']
         ReplyBody = content['ReplyBody']
         created_by = content['created_by']
-        query = "INSERT INTO Replies (MainThreadID, ReplyID, ReplyBody, created_by) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (MainThreadID, ReplyID,ReplyBody, created_by))
+        query = "INSERT INTO Replies (MainThreadID, ReplyBody, created_by) VALUES (%s, %s, %s)"
+        cursor.execute(query, (MainThreadID,ReplyBody, created_by))
         connection.commit()
         cursor.close()
         connection.close()
@@ -403,7 +444,7 @@ def get_content(course_id):
         result = cursor.fetchall()
 
         courseContent = []
-        for CourseID, SectionID in result:
+        for CourseID, SectionID, SectionName in result:
             items = []
             query2 = f"SELECT * FROM Item WHERE SectionID = {SectionID}"
             cursor.execute(query2)
@@ -420,6 +461,7 @@ def get_content(course_id):
             courseContent.append({
                 'CourseID': CourseID,
                 'SectionID': SectionID,
+                'SectionName': SectionName,
                 'Items': items
             })
         cursor.close()
@@ -436,9 +478,10 @@ def add_section():
         cursor = connection.cursor()
         content = request.json
         CourseID = content['CourseID'] 
-        SectionID = content['SectionID']        
-        query = "INSERT INTO Section (CourseID, SectionID) VALUES (%s, %s)"
-        cursor.execute(query, (CourseID, SectionID))
+        SectionName = content['SectionName']  
+        #SectionID = content['SectionID']        
+        query = "INSERT INTO Section (CourseID, SectionName) VALUES (%s, %s)"
+        cursor.execute(query, (CourseID, SectionName))
         connection.commit()
         cursor.close()
         connection.close()
@@ -453,11 +496,11 @@ def add_item():
         cursor = connection.cursor()
         content = request.json
         SectionID = content['SectionID']
-        ItemID = content['ItemID']
+       # ItemID = content['ItemID']
         title = content['title']
         itype = content['itype']
-        query = "INSERT INTO Item (SectionID, ItemID, title, itype) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (SectionID, ItemID, title, itype))
+        query = "INSERT INTO Item (SectionID, title, itype) VALUES (%s, %s, %s)"
+        cursor.execute(query, (SectionID, title, itype))
         connection.commit()
         cursor.close()
         connection.close()
@@ -497,12 +540,12 @@ def submit_assignment():
         connection = get_db_connection()
         cursor = connection.cursor()
         content = request.json
-        AssID = content['AssID']
+        #AssID = content['AssID']
         UserID = content['UserID']
         CourseID = content['CourseID']
         date_submit = content['date_submit']
-        query = "INSERT INTO Assignment (AssID, UserID, CourseID, date_submit) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (AssID, UserID, CourseID, date_submit))
+        query = "INSERT INTO Assignment (UserID, CourseID, date_submit) VALUES (%s, %s, %s)"
+        cursor.execute(query, (UserID, CourseID, date_submit))
         connection.commit()
         cursor.close()
         connection.close()
@@ -521,7 +564,7 @@ def add_assignment_grade(assignment_id):
         cursor.execute(query)
         result = cursor.fetchone()
         if result is not None:
-            cursor.execute(f"UPDATE Assignment SET Grade='{Grade}' WHERE AssID={assignment_id}")
+            cursor.execute(f"UPDATE Grade SET Grade='{Grade}' WHERE AssID={assignment_id}")
             connection.commit()
             cursor.close()
             connection.close()

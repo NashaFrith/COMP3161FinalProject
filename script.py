@@ -1,9 +1,10 @@
 from faker import Faker
 from faker.providers import DynamicProvider
 import random
-
+import mysql.connector
 
 fake = Faker()
+schemas = []
 sqls = []
 sqlsStu = []
 sqlsAcc = []
@@ -17,44 +18,46 @@ secids = []
 as_courses = []
 
 #Database creation
-sql = """DROP DATABASE IF EXISTS uwi;
-CREATE DATABASE uwi;
-USE uwi;
+schemas.append("DROP DATABASE IF EXISTS uwi;")
+schemas.append("CREATE DATABASE uwi;")
+schemas.append("USE uwi;")
 
-CREATE Table Account (UserID int AUTO_INCREMENT PRIMARY KEY, uType varchar(8), Pass varchar(255), FirstName varchar(255), LastName varchar(255));
+schemas.append("CREATE Table Account (UserID int AUTO_INCREMENT PRIMARY KEY, uType varchar(8), Pass varchar(255), FirstName varchar(255), LastName varchar(255));")
 
-CREATE Table Course (CourseID int AUTO_INCREMENT PRIMARY KEY, CourseName varchar(80), CourseCode varchar(255) UNIQUE);
+schemas.append("CREATE Table Course (CourseID int AUTO_INCREMENT PRIMARY KEY, CourseName varchar(80), CourseCode varchar(255) UNIQUE);")
 
-CREATE Table Section (SectionID int AUTO_INCREMENT PRIMARY KEY, CourseID int,
-FOREIGN KEY (CourseID) REFERENCES Course(CourseID));
+schemas.append("""CREATE Table Section(SectionID int AUTO_INCREMENT PRIMARY KEY, CourseID int, SectionName varchar(255),
+                FOREIGN KEY (CourseID) REFERENCES Course(CourseID));""")
 
-CREATE Table Item(SectionID int, ItemID int AUTO_INCREMENT PRIMARY KEY, title varchar(80), itype varchar(20),
-FOREIGN KEY (SectionID) REFERENCES Section(SectionID));
+schemas.append("""CREATE Table Item(SectionID int, ItemID int AUTO_INCREMENT PRIMARY KEY, title varchar(80), itype varchar(20),
+FOREIGN KEY (SectionID) REFERENCES Section(SectionID));""")
 
-CREATE TABLE Teaches (CourseID INT,UserID INT, PRIMARY KEY (CourseID, UserID),
+schemas.append("""CREATE TABLE Teaches (CourseID INT,UserID INT, PRIMARY KEY (CourseID, UserID),
 FOREIGN KEY (CourseID) REFERENCES Course(CourseID),
-FOREIGN KEY (UserID) REFERENCES Account(UserID));
+FOREIGN KEY (UserID) REFERENCES Account(UserID));""")
 
-CREATE Table Assignment (AssID int AUTO_INCREMENT PRIMARY KEY, UserID int, CourseID int, Grade int, date_submit date,
+schemas.append("""CREATE Table Assignment (AssID int AUTO_INCREMENT PRIMARY KEY, UserID int, CourseID int,date_submit date,
 FOREIGN KEY (UserID) REFERENCES Account(UserID),
-FOREIGN KEY (CourseID) REFERENCES Course(CourseID));
+FOREIGN KEY (CourseID) REFERENCES Course(CourseID));""")
 
-CREATE Table Enroll (CourseID int, StudentID int, PRIMARY KEY (CourseID, StudentID),
+schemas.append("""CREATE Table Grades(AssID int PRIMARY KEY, Grade int,
+FOREIGN KEY (AssID) REFERENCES Assignment(AssID));""")
+
+schemas.append("""CREATE Table Enroll (CourseID int, StudentID int, PRIMARY KEY (CourseID, StudentID),
 FOREIGN KEY (CourseID) REFERENCES Course(CourseID),
-FOREIGN KEY (StudentID) REFERENCES Account(UserID));
+FOREIGN KEY (StudentID) REFERENCES Account(UserID));""")
 
-CREATE Table Event (EventID int AUTO_INCREMENT PRIMARY KEY, CourseID int, EventName varchar(255),Duedate date,
-FOREIGN KEY (CourseID) REFERENCES Course(CourseID));
+schemas.append("""CREATE Table Event (EventID int AUTO_INCREMENT PRIMARY KEY, CourseID int, EventName varchar(255),Duedate date,
+FOREIGN KEY (CourseID) REFERENCES Course(CourseID));""")
 
-CREATE Table Forum (ForumID int AUTO_INCREMENT PRIMARY KEY, CourseID int, ForumName varchar(255),
-FOREIGN KEY (CourseID) REFERENCES Course(CourseID));
+schemas.append("""CREATE Table Forum (ForumID int AUTO_INCREMENT PRIMARY KEY, CourseID int, ForumName varchar(255),
+FOREIGN KEY (CourseID) REFERENCES Course(CourseID));""")
 
-CREATE Table Thread (ThreadID int AUTO_INCREMENT PRIMARY KEY, ForumID int, Title varchar(80), Body varchar(2048), created_by varchar(30),
-FOREIGN KEY (ForumID) REFERENCES Forum(ForumID)); 
+schemas.append("""CREATE Table Thread (ThreadID int AUTO_INCREMENT PRIMARY KEY, ForumID int, Title varchar(80), Body varchar(2048), created_by varchar(30),
+FOREIGN KEY (ForumID) REFERENCES Forum(ForumID)); """)
 
-CREATE Table Replies (MainThreadID int, ReplyID int AUTO_INCREMENT PRIMARY KEY, ReplyBody varchar(2048), created_by varchar(30),
-FOREIGN KEY (MainThreadID) REFERENCES Thread(ThreadID));"""
-sqls.append(sql)
+schemas.append("""CREATE Table Replies (MainThreadID int, ReplyID int AUTO_INCREMENT PRIMARY KEY, ReplyBody varchar(2048), created_by varchar(30),
+FOREIGN KEY (MainThreadID) REFERENCES Thread(ThreadID));""")
 
 course_provider = DynamicProvider(
     provider_name = "course",
@@ -183,6 +186,35 @@ for id in studentsCopy:
         sql = "INSERT INTO Enroll (CourseID, StudentID) VALUES ('{}','{}');".format(course[0],id)
         sqls.append(sql)
 
+def get_db_connection():
+    connection = mysql.connector.connect(
+    host = 'localhost',
+    user= 'comp3161',
+    password = 'password123!',
+    database = 'uwi')
+    return connection
+
+
 with open(r'insert.sql','w') as f:
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    print("Creating database...")
+    for schema in schemas:
+        f.write(schema + '\n')
+        try:
+            cursor.execute(schema)
+            connection.commit()
+        except mysql.connector.Error as e:
+            print(str(e))
+    print("Database completed.")
+    print("Running insert queries...")
     for i, sql in enumerate(sqls):
         f.write(sql + '\n')
+        try:
+            cursor.execute(sql)
+            connection.commit()
+        except mysql.connector.Error as e:
+            print(str(e))
+    cursor.close()
+    connection.close()
+print("Tables populated")
