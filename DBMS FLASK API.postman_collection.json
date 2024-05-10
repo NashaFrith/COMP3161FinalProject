@@ -7,6 +7,114 @@
 	},
 	"item": [
 		{
+			"name": "Register user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"FirstName\": \"John\",\r\n    \"LastName\": \"Brown\",\r\n    \"uType\": \"student\",\r\n    \"Pass\": \"JB1000\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/user"
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"UserID\": \"227\",\r\n    \"Pass\": \"JB1000\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/login"
+			},
+			"response": []
+		},
+		{
+			"name": "Create course",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"AdminID\": 1,\r\n    \"CourseName\": \"New Course\",\r\n    \"CourseCode\" : \"NEW0005\",\r\n    \"LecID\" : \"2202\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://127.0.0.1:5000/create_course"
+			},
+			"response": []
+		},
+		{
+			"name": "Get all courses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/get_all_courses"
+			},
+			"response": []
+		},
+		{
+			"name": "Register for a course",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"UserID\": \"50\",\r\n    \"CourseID\": \"1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:5000/register_course"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses for a student",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/courses/student/2"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses for a lecturer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/courses/lecturer/2202"
+			},
+			"response": []
+		},
+		{
+			"name": "Retrieve members of a course",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:5000/course/members/1"
+			},
+			"response": []
+		},
+		{
 			"name": "Create an event",
 			"request": {
 				"method": "POST",
@@ -21,6 +129,24 @@
 					}
 				},
 				"url": "http://127.0.0.1:5000/events"
+			},
+			"response": []
+		},
+		{
+			"name": "Get all events for course",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/course/events/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Get all events for a  student for a specific date",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/student/events/50/2024-04-27"
 			},
 			"response": []
 		},
@@ -43,6 +169,15 @@
 			"response": []
 		},
 		{
+			"name": "Get forums",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/forums/1"
+			},
+			"response": []
+		},
+		{
 			"name": "Create discussion thread",
 			"request": {
 				"method": "POST",
@@ -57,6 +192,15 @@
 					}
 				},
 				"url": "http://127.0.0.1:5000/discussion_threads"
+			},
+			"response": []
+		},
+		{
+			"name": "Get discussion threads",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/discussion_threads/1"
 			},
 			"response": []
 		},
@@ -97,6 +241,15 @@
 			"response": []
 		},
 		{
+			"name": "Get replies",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/replies/1"
+			},
+			"response": []
+		},
+		{
 			"name": "Add section",
 			"request": {
 				"method": "POST",
@@ -133,6 +286,15 @@
 			"response": []
 		},
 		{
+			"name": "Get course content",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:5000/content/1"
+			},
+			"response": []
+		},
+		{
 			"name": "Submit assignment",
 			"request": {
 				"method": "POST",
@@ -151,42 +313,6 @@
 			"response": []
 		},
 		{
-			"name": "Create course",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"AdminID\": 1,\r\n    \"CourseName\": \"New Course\",\r\n    \"CourseCode\" : \"NEW0005\",\r\n    \"LecID\" : \"2202\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": "http://127.0.0.1:5000/create_course"
-			},
-			"response": []
-		},
-		{
-			"name": "Register for a course",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"UserID\": \"50\",\r\n    \"CourseID\": \"1\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": "http://localhost:5000/register_course"
-			},
-			"response": []
-		},
-		{
 			"name": "Add assignment grade",
 			"request": {
 				"method": "POST",
@@ -201,69 +327,6 @@
 					}
 				},
 				"url": "http://127.0.0.1:5000/add_grade/1"
-			},
-			"response": []
-		},
-		{
-			"name": "Get courses for a student",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:5000/courses/student/2"
-			},
-			"response": []
-		},
-		{
-			"name": "Get courses for a lecturer",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:5000/courses/lecturer/2202"
-			},
-			"response": []
-		},
-		{
-			"name": "Retrieve members of a course",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:5000/course/members/1"
-			},
-			"response": []
-		},
-		{
-			"name": "Get forums",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://127.0.0.1:5000/forums/1"
-			},
-			"response": []
-		},
-		{
-			"name": "Get discussion threads",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://127.0.0.1:5000/discussion_threads/1"
-			},
-			"response": []
-		},
-		{
-			"name": "Get replies",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://127.0.0.1:5000/replies/1"
-			},
-			"response": []
-		},
-		{
-			"name": "Get course content",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://127.0.0.1:5000/content/1"
 			},
 			"response": []
 		},
