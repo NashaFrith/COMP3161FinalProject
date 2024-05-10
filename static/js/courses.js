@@ -33,7 +33,7 @@ $(document).ready(function(){
 
         // Get form data
         var formData = {
-            edit_cid: $('#edit-cid').val(),
+            edit_cid: $('#edit-code').val(),
             edit_cname: $('#edit-cname').val(),
             edit_lecturer: $('#edit-lecturer').val(),
             action: 'editCourse' // Assuming this is how you identify the action in your form

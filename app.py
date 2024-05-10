@@ -36,15 +36,15 @@ def verify_password(plain_password, hashed_password):
 @app.route('/login', methods =['GET', 'POST'])
 def login():
     mesage = ''
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
-        username = request.form['username']        
+    if request.method == 'POST' and 'userid' in request.form and 'password' in request.form:
+        username = request.form['userid']        
         password = request.form['password']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM Account WHERE UserID = % s AND Pass = % s', (username, password, ))
+        cursor.execute('SELECT * FROM Account WHERE UserID = %s AND Pass = %s', (username, password, ))
         user = cursor.fetchone()
         if user:
             session['loggedin'] = True
-            session['username'] = user['UserID']
+            session['userid'] = user['UserID']
             session['fname'] = user['FirstName']
             session['lname'] = user['LastName']
             session['role'] = user['uType']
@@ -76,7 +76,6 @@ def create_account():
         user_name = request.form['userid']
         pword = request.form['password']
         role = request.form['role']
-
 
         # Insert user into Account table
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -123,7 +122,272 @@ def student_dashboard():
     else:
         return redirect(url_for('login'))
 
-########################### Course Content ###########################
+
+################################ Courses   #######################################
+
+@app.route("/get_all_courses", methods=['GET', 'POST'])
+def get_all_courses():
+    if 'loggedin' in session:
+        # Fetch courses and their associated lecturers from the database
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('''SELECT c.CourseID as CourseID, c.CourseCode, c.CourseName, a.UserID AS lecturer_id, a.FirstName, a.LastName 
+                          FROM Course c 
+                          LEFT JOIN Teaches t ON c.CourseID = t.CourseID 
+                          LEFT JOIN Account a ON t.UserID = a.UserID 
+                          WHERE a.uType = "Lecturer"''')
+        courses = cursor.fetchall()
+
+        return render_template("courses.html",courses = courses)
+    return redirect(url_for('login'))
+
+@app.route("/save_course", methods=['POST'])
+def save_course():
+    if 'loggedin' in session:
+        cursor = mysql.connection.cursor(dictionary=True)
+        cursor.execute('''SELECT a.FirstName, a.LastName 
+                          FROM Account a
+                          WHERE a.uType = "Lecturer"''')
+        lecturers = cursor.fetchall()
+        if request.method == 'POST':
+            action = request.form['action']
+            if action == 'addCourse':
+                course_code = request.form['ccode']
+                course_name = request.form['cname']
+                lecturer_id = request.form['lname']
+
+                cursor.execute('INSERT INTO Course (CourseCode, CourseName) VALUES (%s, %s)', (course_code, course_name,))
+                new_course_id = cursor.lastrowid
+                cursor.execute('INSERT INTO Teaches (CourseID, UserID) VALUES (%s, %s)', (new_course_id, lecturer_id))
+
+            mysql.connection.commit()
+            cursor.close()
+            flash('Course saved successfully', 'success')
+            return redirect(url_for('courses'))
+
+        flash('Invalid request', 'error')
+        return redirect(url_for('courses'))
+
+    return redirect(url_for('login'))
+
+########################### Search ###########################
+def get_student_results(query):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('''
+        SELECT c.CourseID, c.CourseName, c.CourseCode, e.StudentID, a.UserID AS lecturer_id, a.FirstName, a.LastName
+        FROM Course c
+        Left JOIN Enroll e ON c.CourseID = e.CourseID
+        Left JOIN Account a ON e.StudentID = a.UserID
+        WHERE CONCAT(a.FirstName, ' ', a.LastName) LIKE %s
+    ''', (f'%{query}%',))
+    student_results = cursor.fetchall()
+    return student_results
+
+def get_lecturer_results(query):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('''
+        SELECT c.CourseID, c.CourseName, c.CourseCode, CONCAT(a.FirstName, ' ', a.LastName) as LecturerName
+        FROM Course c
+        LEFT JOIN Teaches t ON c.CourseID = t.CourseID 
+        LEFT JOIN Account a ON t.UserID = a.UserID 
+        WHERE CONCAT(a.FirstName, ' ', a.LastName) LIKE %s
+    ''', (f'%{query}%',))
+    lecturer_results = cursor.fetchall()
+    return lecturer_results
+
+def get_course_results(query):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('''
+        SELECT e.StudentID, a.FirstName,a.LastName, c.CourseID, c.CourseName, c.CourseCode        
+        FROM Enroll e
+        JOIN Account a ON e.StudentID = a.UserID
+        JOIN Course c ON e.CourseID = c.CourseID
+        JOIN Teaches t ON c.CourseID = t.CourseID
+        JOIN Account l ON t.UserID = l.UserID
+        WHERE c.CourseID = %s
+    ''', (query,))
+    course_results = cursor.fetchall()
+    return course_results
+
+
+@app.route("/search_courses", methods=['GET'])
+def search_courses():
+    student_name = request.args.get('student_name')
+    lecturer_name = request.args.get('lecturer_name')
+    course_id = request.args.get('course_id')
+    query = None
+    student_results = None
+    lecturer_results = None
+    course_results = None
+    if student_name:
+        student_results = get_student_results(student_name)
+        query = student_name
+    elif lecturer_name:
+        lecturer_results = get_lecturer_results(lecturer_name)
+        query = lecturer_name
+    elif course_id:
+        course_results = get_course_results(course_id)
+        query = course_id
+    else:
+        flash('Please provide a student name, lecturer name, or course ID', 'error')
+        return redirect(url_for('courses'))
+    return render_template("search_results.html", student_results=student_results, 
+                                   lecturer_results=lecturer_results, course_results=course_results, 
+                                   search_value=query)
+
+# ########################### Course Content ###########################
+
+# ###create course###
+# @app.route('/create_course', methods=['POST'])
+# def create_course():
+
+#     try:
+#         connection= get_db_connection()
+#         cursor=connection.cursor()
+#         content = request.json
+#         AdminID = content ['AdminID'] 
+#         CourseName = content ['CourseName']
+    
+        
+#         query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'admin'"
+#         cursor.execute(query, (AdminID,))
+#         result = cursor.fetchall()
+
+#         if len(result) == 0:
+#             return jsonify({'Error': 'Unauthorized'}), 401
+
+#         query = "INSERT INTO Courses (CourseName) VALUES (%s)"
+#         cursor.execute(query, (CourseName))
+
+#         connection.commit()
+#         cursor.close()
+#         connection.close()
+        
+#         return jsonify({'message': 'Course created successfully'}), 201
+#     except mysql.connector.Error as e:
+#         return jsonify({'error': str(e)}), 500
+        
+
+######################## start of corrections###############################
+#Retrieve courses for a student #
+@app.route('/courses/student/<int:student_id>', methods=['GET'])
+def get_courses_for_student(student_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Retrieve courses for the given student
+        query = """SELECT CourseID, CourseName, CourseCode FROM Course WHERE CourseID IN (
+            SELECT CourseID
+            FROM Enroll
+            WHERE StudentID = %s) """
+        cursor.execute(query, (student_id,))
+        courses = [{'CourseID': row[0], 'CourseName': row[1], 'CourseCode': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+        
+        return jsonify(courses), 200
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
+    
+# Retrieve courses taught by a particular lecturer
+@app.route('/courses/lecturer/<int:lecturer_id>', methods=['GET'])
+def get_courses_for_lecturer(lecturer_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Retrieve courses taught by the lecturer
+        query = """SELECT CourseID, CourseName, CourseCode
+            FROM Course WHERE CourseID IN ( 
+                SELECT CourseID FROM Teaches WHERE UserID = %s
+            )"""
+        cursor.execute(query, (lecturer_id,))
+        courses = [{'CourseID': row[0], 'CourseName': row[1], 'CourseCode': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+        
+        return jsonify(courses), 200
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
+
+
+@app.route('/register_course', methods=['POST'])
+def register_course():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        content = request.json
+
+        UserID = content ['UserID']  # ID of the user registering for the course
+        CourseID = content ['CourseID'] # ID of the course being registered for
+        Role = content ['Role']     # Role of the user (student or lecturer)
+
+
+        if Role == 'Student':
+
+            query = "SELECT * FROM Teaches WHERE UserID = %s AND CourseID = %s"
+            cursor.execute(query, (UserID, CourseID))
+            existing_registration = cursor.fetchone()
+            
+            if existing_registration:
+                return jsonify({'Error': 'Student is already enrolled in the course'}), 400
+            
+            
+            query = "INSERT INTO Teaches (UserID, CourseID) VALUES (%s, %s)"
+            cursor.execute(query, (UserID, CourseID))
+        elif Role == 'Lecturer':
+
+            query = "SELECT * FROM Course WHERE CourseID = %s"
+            cursor.execute(query, (CourseID,))
+            existing_assignment = cursor.fetchone()
+            
+            if existing_assignment and existing_assignment[3] is not None:
+                return jsonify({'Error': 'Course already has a lecturer assigned'}), 400
+            
+            query = "UPDATE Course SET LecID = %s WHERE CourseID = %s"
+            cursor.execute(query, (UserID, CourseID))
+        else:
+            return jsonify({'error': 'Invalid role'}), 400
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'Message': 'Registration successful'}), 201
+    except mysql.connector.Error as e:
+        return jsonify({'Error': str(e)}), 500
+
+#Retrieve members of  a course#
+@app.route('/course/members/<int:course_id>', methods=['GET'])
+def get_members_of_course(course_id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        student_query = """SELECT Account.UserID, Account.FirstName, Account.LastName 
+            FROM Account JOIN Enroll ON Account.UserID = Enroll.StudentID WHERE Enroll.CourseID = %s"""
+        cursor.execute(student_query, (course_id,))
+        students = [{'UserID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
+
+        lecturer_query = """SELECT Account.UserID, Account.FirstName, Account.LastName FROM Account
+            JOIN Teaches ON Account.UserID = Teaches.UserID
+            WHERE Teaches.CourseID = %s"""
+        cursor.execute(lecturer_query, (course_id,))
+        lecturer = [{'UserID': row[0], 'FirstName': row[1], 'LastName': row[2]} for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+
+        course_members = {'students': students, 'lecturer': lecturer}
+        
+        return jsonify(course_members), 200
+    except mysql.connector.Error as e:
+        return jsonify({'error': str(e)}), 500
+        
+############################## end of corrections#########################
+
 @app.route('/content/<course_id>', methods=['GET']) 
 def get_content(course_id):
     try:

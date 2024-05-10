@@ -1,0 +1,82 @@
+{% include 'header.html' %}
+<body>
+    <div class="container">        
+        {% include 'admin_menu.html' %}    
+        <div class="content">
+            <div class="container-fluid">   	
+                <div class="row">
+                    <div class="col-md-10">
+                        <a href="#"><strong><span class="ti-harddrives"></span> Search Results</strong></a>
+                        <p>Search Value: <b>{{ search_value }}</b></p>
+                    </div>
+
+                    <div class="col-md-2">
+                        <a href="{{ url_for('get_all_courses') }}" class="btn btn-primary">Back</a>
+                    </div>
+                </div>
+                <div id="searchResults">
+                    {% if student_results %}    
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>                                  
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in student_results %}
+                                    <tr>
+                                        <td>{{ result.CourseCode }}</td>
+                                        <td>{{ result.CourseName }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                    
+                    {% if lecturer_results %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>                                
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in lecturer_results %}
+                                    <tr>
+                                        <td>{{ result.CourseCode }}</td>
+                                        <td>{{ result.CourseName }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                    
+                    {% if course_results %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Student Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in course_results %}
+                                    <tr>
+                                        <td>{{ result.StudentID }}</td>
+                                        <td>{{ result['FirstName'] }} {{ result['LastName'] }}</td>                           
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                    
+                    {% if not student_results and not lecturer_results and not course_results %}
+                        <p>No results found for your search query.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div> 
+    </div>
+</body>

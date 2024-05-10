@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Course</title>
+</head>
+<body>
+    <h1>Create Course</h1>
+    <form id="create-course-form">
+        <label for="course-name">Course Name:</label>
+        <input type="text" id="course-name" name="course-name" required>
+        <button type="submit">Create Course</button>
+    </form>
+
+    <script>
+        document.getElementById('create-course-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const courseName = document.getElementById('course-name').value;
+            try {
+                const response = await fetch('/create_course', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        CourseName: courseName
+                    })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(data.message);
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
