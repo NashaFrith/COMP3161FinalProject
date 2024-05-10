@@ -612,10 +612,12 @@ def get_courses_with_50plus_students():
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = ("SELECT c.CourseID, CourseName, COUNT(StudentID) AS num_students FROM Enroll e " +
+        query = ("CREATE OR REPLACE VIEW CourseWithFifty AS SELECT c.CourseID, CourseName, COUNT(StudentID) AS num_students FROM Enroll e " +
                 "JOIN Course c on c.CourseID = e.CourseID " +
                 "GROUP BY CourseID, CourseName " +
                 "HAVING COUNT(StudentID) >= 50;")
+        cursor.execute(query)
+        query = ("Select * FROM CourseWithFifty;")
         cursor.execute(query)
         result = cursor.fetchall()
         courses = []
@@ -637,10 +639,12 @@ def get_students_with_5plus_courses():
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = ("SELECT StudentID, FirstName, LastName, COUNT(CourseID) AS num_courses FROM Enroll " + 
+        query = ("CREATE OR REPLACE VIEW BusiestStudents AS SELECT StudentID, FirstName, LastName, COUNT(CourseID) AS num_courses FROM Enroll " + 
                 "JOIN Account  on UserID = StudentID " +
                 "GROUP BY StudentID, FirstName, LastName " +
                 "HAVING COUNT(CourseID) >= 5;")
+        cursor.execute(query)
+        query = ("Select * FROM BusiestStudents")
         cursor.execute(query)
         result = cursor.fetchall()
         students = []
@@ -664,11 +668,13 @@ def get_lecturers_with_3plus_courses():
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = ("SELECT t.UserID, a.FirstName, a.LastName, COUNT(t.CourseID) AS num_courses FROM Teaches t " +
+        query = ("CREATE OR REPLACE VIEW MostPopularLecs AS SELECT t.UserID, a.FirstName, a.LastName, COUNT(t.CourseID) AS num_courses FROM Teaches t " +
                 "JOIN Course c on c.CourseID = t.CourseID " +
                 "JOIN Account a on a.UserID = t.UserID " + 
                 "GROUP BY t.UserID, a.FirstName, a.LastName " +
                 "HAVING COUNT(t.CourseID) >= 3;")
+        cursor.execute(query)
+        query = ("Select * FROM MostPopularLecs;")
         cursor.execute(query)
         result = cursor.fetchall()
         lecturers = []
@@ -691,10 +697,11 @@ def get_top10_courses():
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = ("SELECT c.CourseID, c.CourseName, c.CourseCode, COUNT(StudentID) AS num_students FROM Enroll e " +
+        query = ("CREATE OR REPLACE VIEW MostPopularCourses AS SELECT c.CourseID, c.CourseName, c.CourseCode, COUNT(StudentID) AS num_students FROM Enroll e " +
                 "JOIN Course c on c.CourseID = e.CourseID " + 
-                "GROUP BY c.CourseID, c.CourseName, c.CourseCode " + 
-                "ORDER BY num_students DESC LIMIT 10;")
+                "GROUP BY c.CourseID, c.CourseName, c.CourseCode ")
+        cursor.execute(query)
+        query = ("Select * FROM MostPopularCourses ORDER BY num_students DESC LIMIT 10;")
         cursor.execute(query)
         result = cursor.fetchall()
         courses = []
