@@ -56,8 +56,7 @@ FOREIGN KEY (CourseID) REFERENCES Course(CourseID));""")
 schemas.append("""CREATE Table Thread (ThreadID int AUTO_INCREMENT PRIMARY KEY, ForumID int, Title varchar(80), Body varchar(2048), created_by varchar(30),
 FOREIGN KEY (ForumID) REFERENCES Forum(ForumID)); """)
 
-schemas.append("""CREATE Table Replies (MainThreadID int, ReplyID int AUTO_INCREMENT PRIMARY KEY, ReplyBody varchar(2048), created_by varchar(30),
-FOREIGN KEY (MainThreadID) REFERENCES Thread(ThreadID));""")
+schemas.append("""CREATE Table Replies (MainThreadID int, ReplyID int PRIMARY KEY AUTO_INCREMENT, ReplyBody varchar(2048), created_by varchar(30))AUTO_INCREMENT=1000;""")
 
 course_provider = DynamicProvider(
     provider_name = "course",
@@ -127,7 +126,8 @@ for cid, cname, c_code in courses:
     for i in range(0,2):
         secid = i +1
         secids.append(secid)
-        sql = "INSERT INTO Section(CourseID) VALUES ('{}');".format(cid)
+        sname = fake.word() + " section"
+        sql = "INSERT INTO Section(CourseID) VALUES ('{}', '{}');".format(sname,cid)
         sqls.append(sql)
 
 #INSERT INTO ITEM

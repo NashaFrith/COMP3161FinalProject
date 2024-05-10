@@ -46,7 +46,7 @@ def login():
     cursor = connection.cursor()
     content = request.json
     username = content['UserID']
-    password = content['Password']
+    password = content['Pass']
     cursor.execute('SELECT * FROM Account WHERE UserID = %s AND Pass = %s', (username, password, ))
     user = cursor.fetchone()
 
@@ -68,6 +68,7 @@ def create_course():
         AdminID = content['AdminID']
         CourseName = content['CourseName']
         CourseCode = content['CourseCode']  
+        LecID = content['LecID']  
 
         
         admin_query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'admin'"
@@ -83,6 +84,17 @@ def create_course():
 
         # Getting CourseID of the new created course
         course_id = cursor.lastrowid
+
+        # Assign lecturer to course
+        query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'Lecturer'"
+        cursor.execute(query, (LecID,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'Error': 'Only Lecturers can be assigned to a course.'}), 401
+
+        course_insert_query = "INSERT INTO Teaches (CourseID, UserID) VALUES (%s, %s)"
+        cursor.execute(course_insert_query, (course_id, LecID))
 
         connection.commit()
         cursor.close()
@@ -166,35 +178,17 @@ def register_course():
 
         UserID = content ['UserID']  # ID of the user registering for the course
         CourseID = content ['CourseID'] # ID of the course being registered for
-        Role = content ['Role']     # Role of the user (student or lecturer)
 
-
-        if Role == 'student':
-            UserID = content ['StudentID']  # ID of the user registering for the course
-            query = "SELECT * FROM Enroll WHERE StudentID = %s AND CourseID = %s"
-            cursor.execute(query, (UserID, CourseID))
-            existing_registration = cursor.fetchone()
+        query = "SELECT * FROM Enroll WHERE StudentID = %s AND CourseID = %s"
+        cursor.execute(query, (UserID, CourseID))
+        existing_registration = cursor.fetchone()
             
-            if existing_registration:
-                return jsonify({'Error': 'Student is already enrolled in the course'}), 400
+        if existing_registration:
+            return jsonify({'Error': 'Student is already enrolled in the course'}), 400
             
             
-            query = "INSERT INTO Enroll (StudentID, CourseID) VALUES (%s, %s)"
-            cursor.execute(query, (UserID, CourseID))
-        elif Role == 'lecturer':
-
-            UserID = content ['UserID']  # ID of the user registering for the course
-            query = "SELECT * FROM Teaches WHERE UserID = %s AND CourseID = %s"
-            cursor.execute(query, (CourseID,))
-            existing_assignment = cursor.fetchone()
-            
-            if existing_assignment and existing_assignment[3] is not None:
-                return jsonify({'Error': 'Course already has a lecturer assigned'}), 400
-            
-            query = "INSERT INTO Teaches (UserID, CourseID) VALUES (%s, %s)"
-            cursor.execute(query, (UserID, CourseID))
-        else:
-            return jsonify({'error': 'Invalid role'}), 400
+        query = "INSERT INTO Enroll (StudentID, CourseID) VALUES (%s, %s)"
+        cursor.execute(query, (UserID, CourseID))
 
         connection.commit()
         cursor.close()
@@ -514,7 +508,7 @@ def get_assignments(course_id): #Should it be assignments for a course or studen
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        query = f"SELECT * FROM Assignment WHERE CourseID = {course_id}"
+        query = f"SELECT CourseID, a.AssID, UserID, Grade, date_submit  FROM Assignment a JOIN Grades g on g.AssID = a.AssID WHERE CourseID = {course_id} "
         cursor.execute(query)
         result = cursor.fetchall()
 
@@ -527,6 +521,18 @@ def get_assignments(course_id): #Should it be assignments for a course or studen
                 'Grade': Grade,
                 'date_submit': date_submit
             })
+        query = f"SELECT CourseID, AssID, UserID, date_submit  FROM Assignment WHERE CourseID = {course_id} and AssID not in (SELECT AssID FROM Grades)"
+        cursor.execute(query)
+        result = cursor.fetchall()
+        for CourseID, AssID, UserID, date_submit in result:
+            assignments.append({
+                'CourseID': CourseID,
+                'AssID': AssID,
+                'UserID': UserID,
+                'Grade': "NA",
+                'date_submit': date_submit
+            })
+
         cursor.close()
         connection.close()
         return jsonify(assignments) 
@@ -553,7 +559,7 @@ def submit_assignment():
     except Exception as e:
         return jsonify({'error': str(e)})
 
-@app.route('/add_grade/<int:assignment_id>', methods=['PUT'])
+@app.route('/add_grade/<int:assignment_id>', methods=['POST'])
 def add_assignment_grade(assignment_id):
     try:
         connection = get_db_connection()
@@ -564,7 +570,8 @@ def add_assignment_grade(assignment_id):
         cursor.execute(query)
         result = cursor.fetchone()
         if result is not None:
-            cursor.execute(f"UPDATE Grade SET Grade='{Grade}' WHERE AssID={assignment_id}")
+            query = "INSERT INTO Grades (AssID, Grade) VALUES(%s, %s)"
+            cursor.execute(query, (assignment_id, Grade))
             connection.commit()
             cursor.close()
             connection.close()
@@ -686,7 +693,7 @@ def get_top10_students():
         connection = get_db_connection()
         cursor = connection.cursor()
         query = ("CREATE OR REPLACE VIEW CourseAverageGrades AS SELECT UserID, CourseID, AVG(Grade) AS avgGrade " +
-                "FROM Assignment GROUP BY CourseID, UserID;")
+                "FROM Assignment a JOIN Grades g ON g.AssID = a.AssID GROUP BY CourseID, UserID;")
         cursor.execute(query)
 
         query = ("CREATE OR REPLACE VIEW StudentOverallAverage AS SELECT UserID, AVG(avgGrade) AS overallAvg " +
