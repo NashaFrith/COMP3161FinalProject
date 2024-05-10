@@ -18,7 +18,7 @@ as_courses = []
 
 course_provider = DynamicProvider(
     provider_name = "course",
-    elements = ["Intro to Computing", "Object-oriented Programming","Math for Computing","Computing and Society", "Discrete Mathematics for Computer Science","Analysis of Algorithms","Digital Logic Design","Software Engineering","Object Technology","Net-Centric Computing","Computer Organisation"," Operating Systems","Introduction to Artificial Intelligence","Database Management Systems","Language Processors","Theory of Computation","Real-Time Embedded Systems","Group Project","Internship in Computing","Project Management"]
+    elements = ["Intro to Computing", "Object-oriented Programming","Math for Computing","Computing and Society", "Discrete Mathematics for Computer Science","Analysis of Algorithms","Digital Logic Design","Software Engineering","Object Technology","Net-Centric Computing","Computer Organisation"," Operating Systems","Introduction to Artificial Intelligence","Database Management Systems","Language Processors","Theory of Computation","Real-Time Embedded Systems","Group Project","Internship in Computing","Project Management","Academic Writing I & II","Abnormal Psychology","Accommodations Management","Advanced Financial Accounting","Advanced Financial Management","Advanced Taxation","Applied Mathematics for Hospitality","Applied Research","Audit Practice & Procedures I & II","Bar Operations","Behaviour and the Social Environment","Fundamentals of Accounting","Game Theory I","Geographical Information Systems","Gerontology","Hospitality Accounting","Hospitality Ethics","Hospitality Law","Human and Social Behaviour","Human Computer Interaction & Interface Design","Human Development and Function","Human Relation in Organization","Human Resource Counselling","Human Resource Information Systems","Human Sexual Behaviour","Industrial & Employee Relations","Industrial Automation","Information Assurance & Security","Information Technology Audit and Controls","Innovation in Production and Operations Management","Intake and Assessment","Integrated Food Service Management","Integrated Marketing Communication","Intelligent Systems","International Business Management","International Economics","International Logistics","International Marketing","International Travel & Tourism","Internet Authoring I & II","Internship 1 & II","Internship Logistics Supply Chain","Introduction to Advertising","Introduction to Business & Economic Statistics","Introduction to Business Administration","Introduction to Family Counselling","Introduction to Forensic Psychology","Introduction to Literature","Introduction to Politics","Introduction to Production and Operations Management","Introduction to Psychology","Introduction to Research","Introduction to Sociology","Introduction to Spanish","Introduction to Supervisory Management","Introduction to Tourism & Hospitality Management","Job Analysis and Design","Labour Economics","Legal and Ethical Issues","Legal Concepts for Commerce","Linux+","Management Accounting","Management Information Systems","Management of Social Service Organization","Managing Cultural Diversity","Manufacturing Strategies","Market Research", "Marketing Management","Materials Management","Menu Planning","Mobile App Development","Object Oriented Programming Design using C++","Occupational Health and Safety","Operating Systems","Organization Design, Development and Dynamics","Organizational Psychology","Organizational Theory & Behaviour","Orientation to University Life","Performance Management","Personality Theories","Port Management","Portfolio Management","Practicum I & II","Principles of Microeconomics","Principles of Macro Economics","Principles of Marketing","Principles of Preventative Maintenance","Principles of Preventative Maintenance & Waste Management","Principles of Time Management","Production and Operations Management","Programming Design using Java","Programming Techniques","Project Management","Project+","Psychological Tests and Measurement","Public Relations","Public Speaking","Purchasing Management","Quality Management","Quantitative Methods","Recruitment, Selection and Orientation","Retail Management","Risk Analysis and Management","Sales Management","Sanitation, Hygiene & Safety","Securities Analysis","Security +","Server Plus","Social Justice and Advocacy","Social Media/Market Optimisation","Social Psychology","Social Work Practice I, II, III","Social Work Theories and Policy Frameworks","Sociology of Family and Relationships","Spa Services & Management","Statistics for the Behavioural Sciences","Strategic Management","Strategic Marketing","Sustainable Tourism","System Analysis & Design I & II","Taxation Theory and Practice","Tourism & Hospitality Marketing","Tourism Marketing","Tourism Planning & Policy Development","Training and Development","Transportation Management","Warehouse & Inventory Management","courseA","courseB","courseC","courseD","courseE","courseF"]
 )
 
 item_provider = DynamicProvider(
@@ -35,7 +35,6 @@ def real_job(fake):
     return job
 
 #Create Queries
-
 sql = "CREATE Table Account (UserID int, uType varchar(8), Pass varchar(255), FirstName varchar(255), LastName varchar(255),PRIMARY KEY(UserID))"
 sqls.append(sql)
 sql = "CREATE Table Course (CourseID int, CourseName varchar(80), CourseCode varchar(20), PRIMARY KEY(CourseID));"
@@ -75,7 +74,7 @@ for i in range(1):
     sqls.append(sql)
 
 id = 0
-for i in range(10000):
+for i in range(100000):
     id = id + 1
     ids.append(id)
     fname = fake.first_name()
@@ -86,7 +85,7 @@ for i in range(10000):
     sqls.append(sql)
 
 
-for _ in range(3):
+for _ in range(30):
     lid = random.randint(1011,1050)
     fname = fake.first_name()
     lname= fake.last_name()
@@ -99,7 +98,7 @@ for _ in range(3):
 
 
 #INSERT INTO COURSE   
-for i in range(20):
+for i in range(200):
     cid = 3001 + i
     c_code = "COMP" + str(cid)
     cname = fake.unique.course()
