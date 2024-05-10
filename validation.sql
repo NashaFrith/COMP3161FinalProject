@@ -27,13 +27,13 @@ HAVING COUNT(StudentID) < 10;
 -- No lecturer can teach more than 5 courses.
 SELECT FirstName, LastName, COUNT(CourseID) FROM Account a
 JOIN Teaches t ON a.UserID = t.UserID
-WHERE uType = 'Teacher'
+WHERE uType = 'Lecturer'
 GROUP BY FirstName, LastName
 HAVING COUNT(CourseID) > 5;
 
 -- A lecturer must teach at least 1 course.
 SELECT FirstName, LastName, COUNT(CourseID) FROM Account a
 JOIN Teaches t ON a.UserID = t.UserID
-WHERE uType = 'Teacher'
+WHERE uType = 'Lecturer'
 GROUP BY FirstName, LastName
 HAVING COUNT(CourseID) < 1;

@@ -121,13 +121,14 @@ for cid, cname, c_code in courses:
     sql = "INSERT INTO Course (CourseName, CourseCode) VALUES ('{}','{}');".format(cname, c_code)
     sqls.append(sql)
 
+
 #INSERT INTO SECTION
 for cid, cname, c_code in courses:
     for i in range(0,2):
         secid = i +1
         secids.append(secid)
         sname = fake.word() + " section"
-        sql = "INSERT INTO Section(CourseID) VALUES ('{}', '{}');".format(sname,cid)
+        sql = "INSERT INTO Section(SectionName, CourseID) VALUES ('{}', '{}');".format(sname,cid)
         sqls.append(sql)
 
 #INSERT INTO ITEM
