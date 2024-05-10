@@ -15,33 +15,40 @@ def get_db_connection():
 ###create course###
 @app.route('/create_course', methods=['POST'])
 def create_course():
-
     try:
-        connection= get_db_connection()
-        cursor=connection.cursor()
+        connection = get_db_connection()
+        cursor = connection.cursor()
         content = request.json
-        AdminID = content ['AdminID'] 
-        CourseName = content ['CourseName']
-    
-        
-        query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'admin'"
-        cursor.execute(query, (AdminID,))
-        result = cursor.fetchall()
+        AdminID = content['AdminID']
+        CourseName = content['CourseName']
+        CourseCode = content['CourseCode']  
 
-        if len(result) == 0:
+        
+        admin_query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'admin'"
+        cursor.execute(admin_query, (AdminID,))
+        admin_result = cursor.fetchone()
+
+        if not admin_result:
             return jsonify({'Error': 'Unauthorized'}), 401
 
-        query = "INSERT INTO Courses (CourseName) VALUES (%s)"
-        cursor.execute(query, (CourseName))
+        # Insert new course in the Course table
+        course_insert_query = "INSERT INTO Course (CourseName, CourseCode) VALUES (%s, %s)"
+        cursor.execute(course_insert_query, (CourseName, CourseCode))
+
+        # Getting CourseID of the new created course
+        course_id = cursor.lastrowid
+
+        # Link the course to a lecturer in the Teaches table
+        lecturer_link_query = "INSERT INTO Teaches (CourseID, UserID) VALUES (%s, %s)"
+        cursor.execute(lecturer_link_query, (course_id, admin_result[0])) 
 
         connection.commit()
         cursor.close()
         connection.close()
-        
+
         return jsonify({'message': 'Course created successfully'}), 201
     except mysql.connector.Error as e:
         return jsonify({'error': str(e)}), 500
-    
 
 #Retrieve all courses#
 @app.route('/get_all_courses', methods=['GET'])
