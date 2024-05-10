@@ -2,6 +2,7 @@ from faker import Faker
 from faker.providers import DynamicProvider
 import random
 import mysql.connector
+from datetime import datetime, timedelta
 
 fake = Faker()
 schemas = []
@@ -16,6 +17,7 @@ fids = []
 tids = []
 secids = []
 as_courses = []
+
 
 #Database creation
 schemas.append("DROP DATABASE IF EXISTS uwi;")
@@ -185,6 +187,27 @@ for id in studentsCopy:
     for course in courses_enroll:
         enrolled.get(id, []).append(course)
         sql = "INSERT INTO Enroll (CourseID, StudentID) VALUES ('{}','{}');".format(course[0],id)
+        sqls.append(sql)
+
+
+#INSERT INTO ASSIGNMENT
+ass_ids = []
+x = 1
+for s in sqls:
+    if s.startswith("INSERT INTO Enroll"):
+        if x == 4000:
+            break
+        cid = s.split("'")[1]
+        id = s.split("'")[3]
+        grade = random.randint(0,100)
+        sdate = fake.date()
+        today = datetime.now().date()
+        sdate = fake.date_this_year(before_today=True)
+        sql = "INSERT INTO Assignment (UserID, CourseID,date_submit) VALUES ('{}','{}','{}')".format(id,cid,sdate)
+        sqls.append(sql)
+        ass_ids.append(x)
+        sql = "INSERT INTO Grades (AssID, Grade) VALUES ('{}','{}')".format(x,grade)
+        x += 1
         sqls.append(sql)
 
 def get_db_connection():

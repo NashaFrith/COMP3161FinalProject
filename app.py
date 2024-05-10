@@ -4,8 +4,6 @@ import mysql.connector
 app = Flask(__name__)
 app.json.sort_keys = False
 
-
-
 def get_db_connection():
     connection = mysql.connector.connect(
     host = 'localhost',
@@ -130,6 +128,14 @@ def get_courses_for_student(student_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
+        
+        #################Update#############
+        query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'Student'"
+        cursor.execute(query, (student_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'Error': 'Valid StudentID needed'}), 401
 
         # Retrieve courses for the given student
         query = """SELECT CourseID, CourseName, CourseCode FROM Course WHERE CourseID IN (
@@ -152,6 +158,14 @@ def get_courses_for_lecturer(lecturer_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
+
+      #################Update#############
+        query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'Lecturer'"
+        cursor.execute(query, (lecturer_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'Error': 'Valid LecturerID needed'}), 401
 
         # Retrieve courses taught by the lecturer
         query = """SELECT CourseID, CourseName, CourseCode
@@ -178,6 +192,22 @@ def register_course():
 
         UserID = content ['UserID']  # ID of the user registering for the course
         CourseID = content ['CourseID'] # ID of the course being registered for
+
+       #################Update#############
+        query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'Student'"
+        cursor.execute(query, (UserID,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'Error': 'Valid StudentID needed'}), 401
+
+        #################Update#############
+        query = "SELECT * FROM Course WHERE CourseID = %s"
+        cursor.execute(query, (CourseID,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'Error': 'Valid COurseID needed'}), 401
 
         query = "SELECT * FROM Enroll WHERE StudentID = %s AND CourseID = %s"
         cursor.execute(query, (UserID, CourseID))
