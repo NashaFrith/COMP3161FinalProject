@@ -31,7 +31,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"UserID\": \"227\",\r\n    \"Pass\": \"JB1000\"\r\n}",
+					"raw": "{\r\n    \"UserID\": \"100087\",\r\n    \"Pass\": \"JB1000\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -49,7 +49,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"AdminID\": 1,\r\n    \"CourseName\": \"New Course\",\r\n    \"CourseCode\" : \"NEW0005\",\r\n    \"LecID\" : \"2202\"\r\n}",
+					"raw": "{\r\n    \"AdminID\": 1,\r\n    \"CourseName\": \"New Course\",\r\n    \"CourseCode\" : \"NEW0005\",\r\n    \"LecID\" : \"100051\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -76,7 +76,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"UserID\": \"50\",\r\n    \"CourseID\": \"1\"\r\n}",
+					"raw": "{\r\n    \"UserID\": \"100087\",\r\n    \"CourseID\": \"212\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -92,7 +92,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://localhost:5000/courses/student/2"
+				"url": "http://localhost:5000/courses/student/100087"
 			},
 			"response": []
 		},
@@ -101,7 +101,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://localhost:5000/courses/lecturer/2202"
+				"url": "http://localhost:5000/courses/lecturer/100051"
 			},
 			"response": []
 		},
@@ -110,7 +110,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://localhost:5000/course/members/1"
+				"url": "http://localhost:5000/course/members/212"
 			},
 			"response": []
 		},
@@ -121,7 +121,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"CourseID\": \"1\", \"EventName\": \"New Event\", \"Duedate\": \"2024-04-27\"}",
+					"raw": "{\"CourseID\": \"212\", \"EventName\": \"New Event\", \"Duedate\": \"2024-04-27\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -137,7 +137,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/course/events/1"
+				"url": "http://127.0.0.1:5000/course/events/212"
 			},
 			"response": []
 		},
@@ -146,7 +146,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/student/events/50/2024-04-27"
+				"url": "http://127.0.0.1:5000/student/events/100087/2024-04-27"
 			},
 			"response": []
 		},
@@ -157,7 +157,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"CourseID\": \"1\", \"ForumName\": \"New Forum\"}",
+					"raw": "{\"CourseID\": \"212\", \"ForumName\": \"New Forum\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -173,7 +173,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/forums/1"
+				"url": "http://127.0.0.1:5000/forums/212"
 			},
 			"response": []
 		},
@@ -184,7 +184,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"ForumID\": \"1\", \"Title\": \"New Thread\", \"Body\": \"Discussion Body\", \"created_by\": \"User\"}",
+					"raw": "{\"ForumID\": \"1\", \"Title\": \"New Thread\", \"Body\": \"Discussion Body\", \"created_by\": \"100087\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -211,7 +211,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"MainThreadID\": \"1\", \"ReplyID\": \"1\", \"ReplyBody\": \"Reply Body\", \"created_by\": \"User\"}",
+					"raw": "{\"MainThreadID\": \"1\", \"ReplyID\": \"1\", \"ReplyBody\": \"Reply Body\", \"created_by\": \"100087\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -245,7 +245,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/replies/1"
+				"url": "http://127.0.0.1:5000/replies/212"
 			},
 			"response": []
 		},
@@ -256,7 +256,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"CourseID\": \"1\", \"SectionName\": \"New Section\"}",
+					"raw": "{\"CourseID\": \"212\", \"SectionName\": \"New Section\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -290,7 +290,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/content/1"
+				"url": "http://127.0.0.1:5000/content/212"
 			},
 			"response": []
 		},
@@ -301,7 +301,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"AssID\": \"1\", \"UserID\": \"1\", \"CourseID\": \"1\", \"date_submit\": \"2024-04-27\"}",
+					"raw": "{\"UserID\": \"100087\", \"CourseID\": \"212\", \"date_submit\": \"2024-04-27\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -326,7 +326,7 @@
 						}
 					}
 				},
-				"url": "http://127.0.0.1:5000/add_grade/1"
+				"url": "http://127.0.0.1:5000/add_grade/4002"
 			},
 			"response": []
 		},
@@ -335,7 +335,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "http://127.0.0.1:5000/assignments/1"
+				"url": "http://127.0.0.1:5000/assignments/212"
 			},
 			"response": []
 		},
