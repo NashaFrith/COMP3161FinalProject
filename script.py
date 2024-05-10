@@ -113,7 +113,6 @@ for i in range(210):
     cid = 1 + i
     c_code = "COMP" + str(cid + 3000)
     cname = fake.word() + " studies"
-    #cname = fake.unique.course()
     courses.append((cid, cname, c_code))
 
 for cid, cname, c_code in courses:
@@ -138,12 +137,6 @@ for secid in secids:
         sqls.append(sql)
 
 #INSERT INTO TEACHES
-"""
-for cid, cname, c_code in courses:
-    lid = lids.pop(0)
-    lids.append(lid)
-    sql = "INSERT INTO Teaches (CourseID, UserID) VALUES ('{}','{}');".format(cid,lid)
-    sqls.append(sql)"""
 teaches = {}
 courseCopy = list(courses)
 #Ensuring that each lectuer has a course
@@ -183,14 +176,12 @@ for course in courses:
 studentsCopy = list(ids)
 for id in studentsCopy:
     numC = len(enrolled.get(id, []))
-    num_courses = random.randint(3 - numC, 4 - numC)
-    courses_enroll = random.sample([course for course in courses if course not in enrolled.get(id, [])], 2)
+    num_courses = random.randint(3 - numC, 6 - numC)
+    courses_enroll = random.sample([course for course in courses if course not in enrolled.get(id, [])], num_courses)
     for course in courses_enroll:
-        enrolled[id] = enrolled.get(id, [])
-        enrolled[id].append(course)
+        enrolled.get(id, []).append(course)
         sql = "INSERT INTO Enroll (CourseID, StudentID) VALUES ('{}','{}');".format(course[0],id)
         sqls.append(sql)
-
 
 with open(r'insert.sql','w') as f:
     for i, sql in enumerate(sqls):
