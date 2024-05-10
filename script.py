@@ -42,7 +42,7 @@ sql = "CREATE Table Course (CourseID int, CourseName varchar(80), CourseCode var
 sqls.append(sql)
 sql = "CREATE Table Section (CourseID int, SectionID int, PRIMARY KEY(SectionID));"
 sqls.append(sql)
-ssql = "CREATE Table Item(SectionID int, ItemID int, title int, itype varchar(20), PRIMARY KEY(ItemID));"
+sql = "CREATE Table Item(SectionID int, ItemID int, title int, itype varchar(20), PRIMARY KEY(ItemID));"
 sqls.append(sql)
 sql = "CREATE Table Teaches(CourseID int, UserID int, PRIMARY KEY(CourseID));"
 sqls.append(sql)
