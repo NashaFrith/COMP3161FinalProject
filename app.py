@@ -128,8 +128,6 @@ def get_courses_for_student(student_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-        
-        #################Update#############
         query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'Student'"
         cursor.execute(query, (student_id,))
         result = cursor.fetchone()
@@ -159,7 +157,6 @@ def get_courses_for_lecturer(lecturer_id):
         connection = get_db_connection()
         cursor = connection.cursor()
 
-      #################Update#############
         query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'Lecturer'"
         cursor.execute(query, (lecturer_id,))
         result = cursor.fetchone()
@@ -193,7 +190,6 @@ def register_course():
         UserID = content ['UserID']  # ID of the user registering for the course
         CourseID = content ['CourseID'] # ID of the course being registered for
 
-       #################Update#############
         query = "SELECT * FROM Account WHERE UserID = %s AND uType = 'Student'"
         cursor.execute(query, (UserID,))
         result = cursor.fetchone()
@@ -201,7 +197,6 @@ def register_course():
         if not result:
             return jsonify({'Error': 'Valid StudentID needed'}), 401
 
-        #################Update#############
         query = "SELECT * FROM Course WHERE CourseID = %s"
         cursor.execute(query, (CourseID,))
         result = cursor.fetchone()
