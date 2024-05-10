@@ -34,6 +34,36 @@ def real_job(fake):
     job = job.replace("'","")
     return job
 
+#Create Queries
+
+sql = "CREATE Table Account (UserID int, uType varchar(8), Pass varchar(255), FirstName varchar(255), LastName varchar(255),PRIMARY KEY(UserID))"
+sqls.append(sql)
+sql = "CREATE Table Course (CourseID int, CourseName varchar(80), CourseCode varchar(20), PRIMARY KEY(CourseID));"
+sqls.append(sql)
+sql = "CREATE Table Section (CourseID int, SectionID int, PRIMARY KEY(SectionID));"
+sqls.append(sql)
+ssql = "CREATE Table Item(SectionID int, ItemID int, title int, itype varchar(20), PRIMARY KEY(ItemID));"
+sqls.append(sql)
+sql = "CREATE Table Teaches(CourseID int, UserID int, PRIMARY KEY(CourseID));"
+sqls.append(sql)
+sql = "CREATE Table Assignment (AssID int, UserID int, CourseID int, Grade int, date_submit date, PRIMARY KEY(AssID));"
+sqls.append(sql)
+sql = "CREATE Table Enroll (CourseID int, StudentID int, PRIMARY KEY(CourseID));"
+sqls.append(sql)
+sql = "CREATE Table Event (EventID int, CourseID int, EventName varchar(255), Duedate date, PRIMARY KEY(EventID));"
+sqls.append(sql)
+sql = "CREATE Table Forum (ForumID int, CourseID int, ForumName varchar(255));"
+sqls.append(sql)
+sql = "CREATE Table Thread (ThreadID int, ForumID int, Title varchar(80), Body varchar(255), created_by varchar(30));"
+sqls.append(sql)
+sql = "CREATE Table Replies (MainThreadID int, ReplyID int, ReplyBody varchar(255), created_by varchar(30));"
+sqls.append(sql)
+
+with open(r'/home/nacho/repos/COMP3161FinalProject/insert.sql','w') as f:
+    for i, sql in enumerate(sqls):
+        f.write(sql + '\n')
+
+
 #INSERT INTO ACCOUNT
 for i in range(1):
     id = 9000 + i
@@ -46,7 +76,7 @@ for i in range(1):
 
 id = 0
 for i in range(10000):
-    id += 1
+    id = id + 1
     ids.append(id)
     fname = fake.first_name()
     lname= fake.last_name()
